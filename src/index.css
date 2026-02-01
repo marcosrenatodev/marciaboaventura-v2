@@ -191,7 +191,6 @@
   /* Floating button WhatsApp */
   .whatsapp-float {
     @apply fixed bottom-6 right-6 z-50;
-    box-shadow: 0 4px 20px hsla(142, 70%, 45%, 0.4);
   }
 
   /* Glass effect */
