@@ -96,21 +96,21 @@ const Hero = () => {
           </motion.div>
         </motion.div>
 
-        {/* Scroll Indicator */}
-        <motion.a
-          href="#sobre"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 1.5 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 text-primary-foreground/60 hover:text-gold transition-colors duration-300"
+      {/* Scroll Indicator - fora do container de conteúdo */}
+      <motion.a
+        href="#sobre"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1, delay: 1.5 }}
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 text-primary-foreground/60 hover:text-gold transition-colors duration-300"
+      >
+        <motion.div
+          animate={{ y: [0, 10, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
         >
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <ChevronDown size={32} />
-          </motion.div>
-        </motion.a>
+          <ChevronDown size={32} />
+        </motion.div>
+      </motion.a>
       </div>
     </section>
   );
