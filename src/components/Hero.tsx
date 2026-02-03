@@ -96,6 +96,7 @@ const Hero = () => {
           </motion.div>
         </motion.div>
 
+      </div>
       {/* Scroll Indicator - fora do container de conteúdo */}
       <motion.a
         href="#sobre"
@@ -111,7 +112,6 @@ const Hero = () => {
           <ChevronDown size={32} />
         </motion.div>
       </motion.a>
-      </div>
     </section>
   );
 };
