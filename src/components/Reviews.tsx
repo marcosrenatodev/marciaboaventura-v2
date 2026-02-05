@@ -204,6 +204,10 @@ const Reviews = () => {
                   <p className="text-primary-foreground font-medium mb-1">Atendimento</p>
                   <p className="text-primary-foreground/70 text-sm">Presencial em Curitiba • Online em todo o Brasil</p>
                 </div>
+                <div className="glass-effect rounded-lg p-4 border border-gold/30">
+                  <p className="text-gold font-bold mb-1">🚨 Atendimento de Flagrante 24h</p>
+                  <p className="text-primary-foreground/70 text-sm">Plantão disponível para situações de urgência criminal</p>
+                </div>
               </div>
             </div>
           </div>

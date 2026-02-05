@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef } from "react";
-import { Scale, Users, ShoppingBag, Gavel, Building2, Heart } from "lucide-react";
+import { Scale, Users, ShoppingBag, Gavel } from "lucide-react";
 
 const areas = [
   {
@@ -23,16 +23,6 @@ const areas = [
     icon: Gavel,
     title: "Direito Penal",
     description: "Defesa criminal e acompanhamento processual completo.",
-  },
-  {
-    icon: Building2,
-    title: "Direito Empresarial",
-    description: "Assessoria jurídica para empresas e empreendedores.",
-  },
-  {
-    icon: Heart,
-    title: "Mediação e Conciliação",
-    description: "Resolução de conflitos de forma amigável e eficiente.",
   },
 ];
 
@@ -87,7 +77,7 @@ const PracticeAreas = () => {
           variants={containerVariants}
           initial="hidden"
           animate={isInView ? "visible" : "hidden"}
-          className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
         >
           {areas.map((area) => (
             <motion.div
