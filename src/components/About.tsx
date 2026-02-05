@@ -47,22 +47,17 @@ const About = () => {
 
             <div className="space-y-4 text-muted-foreground leading-relaxed">
               <p>
-                Atuo com uma advocacia <strong className="text-foreground">personalizada, estratégica e profundamente humanizada</strong>, 
-                com foco nas áreas Cível, Família, Consumidor e Criminal.
+                Atuação com foco na advocacia <strong className="text-foreground">Cível, de Família, Consumidor e Criminal</strong>, 
+                unindo o rigor técnico à sensibilidade necessária para lidar com questões complexas.
               </p>
               <p>
-                Acredito que cada cliente carrega uma história única — por isso, cada caso é tratado com 
-                escuta ativa, visão estratégica e total dedicação. Com experiência e preparo técnico, 
-                ofereço <strong className="text-foreground">soluções jurídicas seguras, ágeis e eficazes</strong>.
-              </p>
-              <p>
-                Minha atuação é pautada na ética, no respeito e na busca incansável pelos seus direitos 
-                e interesses. Mais do que resolver conflitos, meu objetivo é proporcionar a você 
-                tranquilidade, proteção jurídica e clareza em cada etapa do processo.
+                Nossa missão é simples: <strong className="text-foreground">defender seus direitos com estratégia e transparência</strong>. 
+                Acreditamos na advocacia como uma ferramenta de proteção e transformação, por isso, cada caso 
+                recebe dedicação exclusiva e um planejamento jurídico sob medida para as suas necessidades.
               </p>
               <p className="text-marsala font-medium italic">
-                "Se você busca alguém que trate sua causa com seriedade, comprometimento e sensibilidade, 
-                estou pronta para te ajudar."
+                "Se você busca uma atuação séria, ética e comprometida com o seu resultado, 
+                estamos prontos para ajudar."
               </p>
             </div>
 
