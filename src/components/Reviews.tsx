@@ -6,35 +6,35 @@ import { Card, CardContent } from "@/components/ui/card";
 
 const reviews = [
   {
-    name: "Ana Paula S.",
+    name: "Mara Regina",
     rating: 5,
-    text: "Excelente profissional! A Dra. Marcia me ajudou em um processo de família muito delicado. Atendimento humanizado e resultados excelentes.",
-    date: "há 2 semanas",
+    text: "Indico com total segurança e eficiência a Dra Márcia. Atenciosa e competente. Me ajudou muito no meu caso, do início ao fim esclarecendo minhas dúvidas. Você estará bem representado pela Dr. Márcia Boaventura.",
+    date: "4 meses atrás",
   },
   {
-    name: "Carlos Eduardo M.",
+    name: "Alexandro Barros",
     rating: 5,
-    text: "Muito competente e atenciosa. Resolveu meu caso de consumidor de forma rápida e eficiente. Recomendo demais!",
-    date: "há 1 mês",
+    text: "Doutora Márcia essa vai longe obrigada Pela dedicação no meu caso, tem Me ajudado muito. Super indico ✅",
+    date: "5 meses atrás",
   },
   {
-    name: "Fernanda L.",
+    name: "Janete de Fátima Guimarães Conceicao",
     rating: 5,
-    text: "Profissional séria e dedicada. Me senti acolhida desde o primeiro contato. Tirou todas as minhas dúvidas com paciência.",
-    date: "há 2 meses",
+    text: "Uma excelente profissional, trabalhou com muita seriedade e competência. Recomendo.",
+    date: "4 meses atrás",
   },
   {
-    name: "Roberto C.",
+    name: "Ivonete Mayer",
     rating: 5,
-    text: "Advogada excepcional! Conhecimento técnico impressionante e muito comprometida com o cliente. Ética e transparência em todo o processo.",
-    date: "há 3 meses",
+    text: "Tenho excelente experiência com a Dra Marcia profissional experiente e dedicada",
+    date: "4 meses atrás",
   },
 ];
 
 const stats = [
-  { icon: Users, value: "500+", label: "Clientes Atendidos" },
-  { icon: Scale, value: "10+", label: "Anos de Experiência" },
-  { icon: Award, value: "98%", label: "Casos de Sucesso" },
+  // { icon: Users, value: "500+", label: "Clientes Atendidos" },
+  // { icon: Scale, value: "10+", label: "Anos de Experiência" },
+  // { icon: Award, value: "98%", label: "Casos de Sucesso" },
 ];
 
 const Reviews = () => {
@@ -67,7 +67,7 @@ const Reviews = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="section-divider mx-auto mb-6"
           />
-          
+
           {/* Google Rating Summary */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -156,7 +156,7 @@ const Reviews = () => {
                   <Phone className="w-5 h-5 text-gold mt-1 shrink-0" />
                   <div>
                     <p className="text-primary-foreground font-medium">Telefone / WhatsApp</p>
-                    <a 
+                    <a
                       href="https://wa.me/5541997085626"
                       className="text-primary-foreground/70 hover:text-gold transition-colors"
                     >
@@ -168,7 +168,7 @@ const Reviews = () => {
                   <Mail className="w-5 h-5 text-gold mt-1 shrink-0" />
                   <div>
                     <p className="text-primary-foreground font-medium">E-mail</p>
-                    <a 
+                    <a
                       href="mailto:contato@marciaboaventura.adv.br"
                       className="text-primary-foreground/70 hover:text-gold transition-colors"
                     >
