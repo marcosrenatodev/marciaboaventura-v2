@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef } from "react";
-import marciaImg from "@/assets/marcia.jpg";
+import marciaImg from "@/assets/marcia-boaventura.webp";
 
 const About = () => {
   const ref = useRef(null);

@@ -52,15 +52,26 @@ const Hero = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.8 }}
-            className="flex flex-wrap justify-center gap-2 md:gap-4 text-gold text-sm md:text-base font-medium mb-12"
+            className="mb-12 font-medium text-gold"
           >
-            <span>Direito Civil</span>
-            <span className="text-primary-foreground/40">•</span>
-            <span>Direito do Consumidor</span>
-            <span className="text-primary-foreground/40">•</span>
-            <span>Direito de Família</span>
-            <span className="text-primary-foreground/40">•</span>
-            <span>Direito Penal</span>
+            <div className="flex items-center justify-center gap-2 whitespace-nowrap text-xs md:hidden">
+              <span>Civil</span>
+              <span className="text-primary-foreground/40">•</span>
+              <span>Consumidor</span>
+              <span className="text-primary-foreground/40">•</span>
+              <span>Família</span>
+              <span className="text-primary-foreground/40">•</span>
+              <span>Penal</span>
+            </div>
+            <div className="hidden flex-wrap justify-center gap-4 text-base md:flex">
+              <span>Direito Civil</span>
+              <span className="text-primary-foreground/40">•</span>
+              <span>Direito do Consumidor</span>
+              <span className="text-primary-foreground/40">•</span>
+              <span>Direito de Família</span>
+              <span className="text-primary-foreground/40">•</span>
+              <span>Direito Penal</span>
+            </div>
           </motion.div>
 
           {/* Social Icons */}
