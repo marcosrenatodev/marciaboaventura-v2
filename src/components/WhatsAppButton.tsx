@@ -1,6 +1,6 @@
-import { MessageCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 
 const WhatsAppButton = () => {
   const [showMessage, setShowMessage] = useState(false);
@@ -106,7 +106,7 @@ const WhatsAppButton = () => {
         className="w-14 h-14 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center text-white transition-all duration-300 hover:scale-110 shadow-lg shadow-green-500/30"
         aria-label="Contato via WhatsApp"
       >
-        <MessageCircle size={28} />
+        <WhatsAppIcon className="h-7 w-7" />
       </motion.a>
     </div>
   );

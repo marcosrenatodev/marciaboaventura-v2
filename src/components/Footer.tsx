@@ -1,5 +1,6 @@
-import { Instagram, MessageCircle, Mail } from "lucide-react";
-import logo from "@/assets/logo.jpeg";
+import { Instagram, Mail } from "lucide-react";
+import logo from "@/assets/logo-mb.png";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -31,7 +32,7 @@ const Footer = () => {
               className="w-10 h-10 rounded-full border border-primary-foreground/20 flex items-center justify-center text-primary-foreground/60 hover:border-gold hover:text-gold transition-all duration-300"
               aria-label="WhatsApp"
             >
-              <MessageCircle size={18} />
+              <WhatsAppIcon className="h-[18px] w-[18px]" />
             </a>
             <a
               href="mailto:contato@marciaboaventura.adv.br"

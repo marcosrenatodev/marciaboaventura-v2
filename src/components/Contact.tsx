@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef } from "react";
-import { MessageCircle, Phone, MapPin, Clock, Mail } from "lucide-react";
+import { Phone, MapPin, Clock, Mail } from "lucide-react";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 
 const Contact = () => {
   const ref = useRef(null);
@@ -73,7 +74,7 @@ const Contact = () => {
               transition={{ duration: 0.6, delay: 0.4 }}
               className="inline-flex items-center gap-3 px-8 py-4 bg-gold hover:bg-gold-light text-dark font-semibold rounded transition-all duration-300 hover:shadow-xl hover:shadow-gold/30"
             >
-              <MessageCircle className="w-5 h-5" />
+              <WhatsAppIcon className="w-5 h-5" />
               Falar pelo WhatsApp
             </motion.a>
           </motion.div>
@@ -87,7 +88,7 @@ const Contact = () => {
           >
             <div className="text-center">
               <div className="w-20 h-20 rounded-full bg-gold/20 flex items-center justify-center mx-auto mb-6">
-                <MessageCircle className="w-10 h-10 text-gold" />
+                <WhatsAppIcon className="w-10 h-10 text-gold" />
               </div>
               <h3 className="font-serif text-2xl text-primary-foreground mb-4">
                 Atendimento Personalizado

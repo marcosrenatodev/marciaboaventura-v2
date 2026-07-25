@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef } from "react";
 import marciaImg from "@/assets/marcia-boaventura.webp";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 
 const About = () => {
   const ref = useRef(null);
@@ -73,6 +74,7 @@ const About = () => {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-marsala hover:bg-marsala-dark text-primary-foreground font-medium rounded transition-all duration-300 hover:shadow-xl hover:shadow-marsala/20"
               >
+                <WhatsAppIcon className="h-5 w-5" />
                 Agende uma Consulta
               </a>
             </motion.div>

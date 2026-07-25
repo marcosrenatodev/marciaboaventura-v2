@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
-import { Instagram, MessageCircle, Mail, ChevronDown } from "lucide-react";
+import { Instagram, Mail, ChevronDown } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 
 const Hero = () => {
   return (
@@ -97,7 +98,7 @@ const Hero = () => {
               className="w-14 h-14 rounded-full border-2 border-primary-foreground/30 flex items-center justify-center text-primary-foreground/80 hover:border-gold hover:text-gold transition-all duration-300 hover:scale-110"
               aria-label="WhatsApp"
             >
-              <MessageCircle size={22} />
+              <WhatsAppIcon className="h-[22px] w-[22px]" />
             </a>
             <a
               href="mailto:contato@marciaboaventura.adv.br"

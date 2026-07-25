@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
-import logo from "@/assets/logo.jpeg";
+import logo from "@/assets/logo-mb.png";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 
 const navItems = [
   { label: "Início", href: "#inicio" },
@@ -68,8 +69,9 @@ const Header = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            className="ml-4 px-6 py-2.5 bg-gold hover:bg-gold-light text-dark font-medium text-sm rounded transition-all duration-300 hover:shadow-lg hover:shadow-gold/20"
+            className="ml-4 inline-flex items-center gap-2 px-6 py-2.5 bg-gold hover:bg-gold-light text-dark font-medium text-sm rounded transition-all duration-300 hover:shadow-lg hover:shadow-gold/20"
           >
+            <WhatsAppIcon className="h-4 w-4" />
             Fale Conosco
           </motion.a>
         </nav>
@@ -108,8 +110,9 @@ const Header = () => {
                 href="https://wa.me/5541997085626"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 px-6 py-3 bg-gold text-dark font-medium text-center rounded transition-all duration-300"
+                className="mt-4 inline-flex items-center justify-center gap-2 px-6 py-3 bg-gold text-dark font-medium text-center rounded transition-all duration-300"
               >
+                <WhatsAppIcon className="h-5 w-5" />
                 Fale Conosco
               </a>
             </div>
