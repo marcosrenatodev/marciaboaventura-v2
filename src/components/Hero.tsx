@@ -58,6 +58,8 @@ const Hero = () => {
             <span className="text-primary-foreground/40">•</span>
             <span>Direito do Consumidor</span>
             <span className="text-primary-foreground/40">•</span>
+            <span>Direito de Família</span>
+            <span className="text-primary-foreground/40">•</span>
             <span>Direito Penal</span>
           </motion.div>
 
