@@ -127,9 +127,7 @@ jobs:
             adb reverse tcp:8081 tcp:8081
             adb reverse tcp:8787 tcp:8787
             adb shell appops set com.example.marciaescritorio.demo SYSTEM_ALERT_WINDOW allow
-            manifest_url="$(node -e 'process.stdout.write(encodeURIComponent("http://127.0.0.1:8081"))')"
-            launch_url="marcia-demo://?__expo_url=${manifest_url}&__expo_disable_onboarding=1&__expo_disable_fab=1&__expo_disable_auto_launch=1"
-            adb shell "am start -a android.intent.action.VIEW -d '$launch_url'"
+            adb shell "am start -a android.intent.action.VIEW -d 'marcia-demo://?__expo_url=http%3A%2F%2F127.0.0.1%3A8081&__expo_disable_onboarding=1&__expo_disable_fab=1&__expo_disable_auto_launch=1'"
             maestro test --device emulator-5554 \
               -e APP_ID=com.example.marciaescritorio.demo \
               --format=JUNIT \
