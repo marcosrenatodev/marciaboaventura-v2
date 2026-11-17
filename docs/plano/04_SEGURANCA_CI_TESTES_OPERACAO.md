@@ -37,7 +37,7 @@ Validação local observada em 17/11/2026: passaram typechecks de contracts/API/
 
 Maestro Android API 36 havia passado 1/1 (3m25s) em uma versão anterior da UX. A repetição após mover a busca de processos e incluir vencimentos financeiros não concluiu neste host: Android exibiu “System UI isn't responding”. `/dev/kvm` está ausente e o emulador local usa virtualização por software. O fluxo foi simplificado para abrir o app pelo deep link do Expo e a CI hospedada mantém KVM habilitado; ainda é necessário registrar o resultado remoto. O APK development/debug já compilou com `BUILD SUCCESSFUL` (11m17s); não é pacote de distribuição. D1 e fixtures usados localmente são descartáveis.
 
-O E2E nativo iOS não roda neste host Linux sem Xcode. No segundo run nativo (`44052757201`), Android e iOS passaram setup/instalação e estavam compilando development clients no último estado consultado. Enquanto isso, este branch substitui o smoke iOS pela mesma jornada completa Android/iOS (`office-workspace.yaml`); seus jobs precisam rodar no commit atualizado. Não declarar CI verde, E2E nativo atual, WebKit aprovado ou aprovação de Márcia antes dos respectivos resultados.
+O E2E nativo iOS não roda neste host Linux sem Xcode. No run `44055069612`, o Android compilou com sucesso e a API/D1 local aplicou as migrations; a inicialização parou porque o Expo SDK 58 rejeita a flag obsoleta `--non-interactive` (sugere `CI=1`). Os dois jobs foram corrigidos para remover a flag e definir `CI=1`; o novo run deve validar Metro, launch e a jornada Maestro completa. O iOS continuava compilando na última consulta. Não declarar CI nativa verde ou aprovação de Márcia antes dos resultados.
 
 ### Próximas melhorias de CI
 

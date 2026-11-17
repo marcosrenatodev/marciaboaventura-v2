@@ -73,12 +73,13 @@ jobs:
       - name: Start ephemeral D1 API and Metro
         env:
           EXPO_PUBLIC_API_URL: http://10.0.2.2:8787
+          CI: "1"
           EXPO_NO_DEV_MENU: "1"
           MARCIA_E2E_KEEP_DB: "1"
         run: |
           set -euo pipefail
           nohup node e2e/start-api.mjs > "$RUNNER_TEMP/marcia-api.log" 2>&1 < /dev/null &
-          nohup pnpm --filter @marcia/mobile exec expo start --dev-client --host localhost --port 8081 --non-interactive \
+          nohup pnpm --filter @marcia/mobile exec expo start --dev-client --host localhost --port 8081 \
             > "$RUNNER_TEMP/marcia-metro.log" 2>&1 < /dev/null &
           for attempt in $(seq 1 90); do
             if curl --fail --silent http://127.0.0.1:8787/api/auth/get-session >/dev/null \
@@ -210,12 +211,13 @@ jobs:
       - name: Start ephemeral D1 API and Metro
         env:
           EXPO_PUBLIC_API_URL: http://127.0.0.1:8787
+          CI: "1"
           EXPO_NO_DEV_MENU: "1"
           MARCIA_E2E_KEEP_DB: "1"
         run: |
           set -euo pipefail
           nohup node e2e/start-api.mjs > "$RUNNER_TEMP/marcia-api.log" 2>&1 < /dev/null &
-          nohup pnpm --filter @marcia/mobile exec expo start --dev-client --host localhost --port 8081 --non-interactive \
+          nohup pnpm --filter @marcia/mobile exec expo start --dev-client --host localhost --port 8081 \
             > "$RUNNER_TEMP/marcia-metro.log" 2>&1 < /dev/null &
           for attempt in $(seq 1 90); do
             if curl --fail --silent http://127.0.0.1:8787/api/auth/get-session >/dev/null \
