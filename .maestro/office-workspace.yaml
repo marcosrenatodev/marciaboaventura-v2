@@ -130,7 +130,11 @@ appId: ${APP_ID}
     start: "90%, 75%"
     end: "90%, 35%"
 - tapOn: "Salvar busca no escritório"
-- swipe:
-    start: "90%, 75%"
-    end: "90%, 35%"
+- scrollUntilVisible:
+    element: "Busca salva no escritório. Os resultados precisam ser conferidos na fonte oficial."
+    direction: UP
+- assertVisible: "Busca salva no escritório. Os resultados precisam ser conferidos na fonte oficial."
+- scrollUntilVisible:
+    element: "responsabilidade civil falha serviço"
+    direction: DOWN
 - assertVisible: "responsabilidade civil falha serviço"
