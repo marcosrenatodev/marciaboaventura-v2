@@ -3,9 +3,14 @@ appId: ${APP_ID}
 - tapOn:
     text: "Wait"
     optional: true
-- tapOn:
-    text: "Open"
-    optional: true
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: "Open"
+          timeout: 10000
+      - tapOn: "Open"
 - extendedWaitUntil:
     visible:
       text: "Bem-vinda"
