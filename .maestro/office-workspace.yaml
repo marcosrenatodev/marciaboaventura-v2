@@ -3,6 +3,9 @@ appId: ${APP_ID}
 - tapOn:
     text: "Wait"
     optional: true
+- tapOn:
+    text: "Open"
+    optional: true
 - extendedWaitUntil:
     visible:
       id: "auth-welcome-title"
