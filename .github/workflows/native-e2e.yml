@@ -78,6 +78,19 @@ jobs:
           MARCIA_E2E_KEEP_DB: "1"
         run: |
           set -euo pipefail
+          mve_setup_token="$(openssl rand -hex 32)"
+          mve_auth_secret="$(openssl rand -hex 32)"
+          mve_password="$(openssl rand -hex 24)"
+          echo "::add-mask::$mve_setup_token"
+          echo "::add-mask::$mve_auth_secret"
+          echo "::add-mask::$mve_password"
+          {
+            echo "MARCIA_E2E_SETUP_TOKEN=$mve_setup_token"
+            echo "MARCIA_E2E_AUTH_SECRET=$mve_auth_secret"
+            echo "MARCIA_E2E_PASSWORD=$mve_password"
+          } >> "$GITHUB_ENV"
+          export MARCIA_E2E_SETUP_TOKEN="$mve_setup_token"
+          export MARCIA_E2E_AUTH_SECRET="$mve_auth_secret"
           nohup node e2e/start-api.mjs > "$RUNNER_TEMP/marcia-api.log" 2>&1 < /dev/null &
           nohup pnpm --filter @marcia/mobile exec expo start --dev-client --host localhost --port 8081 \
             > "$RUNNER_TEMP/marcia-metro.log" 2>&1 < /dev/null &
@@ -128,7 +141,7 @@ jobs:
             adb reverse tcp:8787 tcp:8787
             adb shell appops set com.example.marciaescritorio.demo SYSTEM_ALERT_WINDOW allow
             adb shell "am start -a android.intent.action.VIEW -d 'marcia-demo://?__expo_url=http%3A%2F%2F127.0.0.1%3A8081&__expo_disable_onboarding=1&__expo_disable_fab=1&__expo_disable_auto_launch=1'"
-            maestro test --device emulator-5554 -e APP_ID=com.example.marciaescritorio.demo --format=JUNIT --output="$RUNNER_TEMP/maestro-android.xml" --test-output-dir="$RUNNER_TEMP/maestro-android" .maestro/office-workspace.yaml
+            maestro test --device emulator-5554 -e APP_ID=com.example.marciaescritorio.demo -e E2E_PASSWORD="$MARCIA_E2E_PASSWORD" -e E2E_SETUP_TOKEN="$MARCIA_E2E_SETUP_TOKEN" --format=JUNIT --output="$RUNNER_TEMP/maestro-android.xml" --test-output-dir="$RUNNER_TEMP/maestro-android" .maestro/office-workspace.yaml
 
       - name: Upload Android E2E screenshots and report
         if: always()
@@ -219,6 +232,19 @@ jobs:
           MARCIA_E2E_KEEP_DB: "1"
         run: |
           set -euo pipefail
+          mve_setup_token="$(openssl rand -hex 32)"
+          mve_auth_secret="$(openssl rand -hex 32)"
+          mve_password="$(openssl rand -hex 24)"
+          echo "::add-mask::$mve_setup_token"
+          echo "::add-mask::$mve_auth_secret"
+          echo "::add-mask::$mve_password"
+          {
+            echo "MARCIA_E2E_SETUP_TOKEN=$mve_setup_token"
+            echo "MARCIA_E2E_AUTH_SECRET=$mve_auth_secret"
+            echo "MARCIA_E2E_PASSWORD=$mve_password"
+          } >> "$GITHUB_ENV"
+          export MARCIA_E2E_SETUP_TOKEN="$mve_setup_token"
+          export MARCIA_E2E_AUTH_SECRET="$mve_auth_secret"
           nohup node e2e/start-api.mjs > "$RUNNER_TEMP/marcia-api.log" 2>&1 < /dev/null &
           nohup pnpm --filter @marcia/mobile exec expo start --dev-client --host localhost --port 8081 \
             > "$RUNNER_TEMP/marcia-metro.log" 2>&1 < /dev/null &
@@ -253,6 +279,8 @@ jobs:
         run: |
           maestro test --device "$(cat "$RUNNER_TEMP/ios-simulator-udid")" \
             -e APP_ID=com.example.marciaescritorio.demo \
+            -e E2E_PASSWORD="$MARCIA_E2E_PASSWORD" \
+            -e E2E_SETUP_TOKEN="$MARCIA_E2E_SETUP_TOKEN" \
             --format=JUNIT \
             --output="$RUNNER_TEMP/maestro-ios.xml" \
             --test-output-dir="$RUNNER_TEMP/maestro-ios" \
