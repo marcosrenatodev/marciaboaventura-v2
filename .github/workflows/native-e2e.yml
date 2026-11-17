@@ -128,12 +128,7 @@ jobs:
             adb reverse tcp:8787 tcp:8787
             adb shell appops set com.example.marciaescritorio.demo SYSTEM_ALERT_WINDOW allow
             adb shell "am start -a android.intent.action.VIEW -d 'marcia-demo://?__expo_url=http%3A%2F%2F127.0.0.1%3A8081&__expo_disable_onboarding=1&__expo_disable_fab=1&__expo_disable_auto_launch=1'"
-            maestro test --device emulator-5554 \
-              -e APP_ID=com.example.marciaescritorio.demo \
-              --format=JUNIT \
-              --output="$RUNNER_TEMP/maestro-android.xml" \
-              --test-output-dir="$RUNNER_TEMP/maestro-android" \
-              .maestro/office-workspace.yaml
+            maestro test --device emulator-5554 -e APP_ID=com.example.marciaescritorio.demo --format=JUNIT --output="$RUNNER_TEMP/maestro-android.xml" --test-output-dir="$RUNNER_TEMP/maestro-android" .maestro/office-workspace.yaml
 
       - name: Upload Android E2E screenshots and report
         if: always()
