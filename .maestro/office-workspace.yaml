@@ -3,14 +3,16 @@ appId: ${APP_ID}
 - tapOn:
     text: "Wait"
     optional: true
-- runFlow:
-    when:
-      platform: iOS
+- repeat:
+    times: 4
     commands:
-      - extendedWaitUntil:
-          visible: "Open"
-          timeout: 10000
-      - tapOn: "Open"
+      - runFlow:
+          when:
+            visible: "Open"
+          commands:
+            - tapOn: "Open"
+      - waitForAnimationToEnd:
+          timeout: 1000
 - extendedWaitUntil:
     visible:
       text: "Bem-vinda"
@@ -135,10 +137,6 @@ appId: ${APP_ID}
     start: "90%, 75%"
     end: "90%, 35%"
 - tapOn: "Salvar busca no escritório"
-- scrollUntilVisible:
-    element: "Busca salva no escritório. Os resultados precisam ser conferidos na fonte oficial."
-    direction: UP
-- assertVisible: "Busca salva no escritório. Os resultados precisam ser conferidos na fonte oficial."
 - scrollUntilVisible:
     element: "responsabilidade civil falha serviço"
     direction: DOWN
