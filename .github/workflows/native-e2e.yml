@@ -100,7 +100,7 @@ jobs:
             sudo udevadm trigger --name-match=kvm
           fi
 
-      - name: Run rendered Android workspace flow
+      - name: Run rendered Android office journey
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 36
@@ -125,7 +125,7 @@ jobs:
               --format=JUNIT \
               --output="$RUNNER_TEMP/maestro-android.xml" \
               --test-output-dir="$RUNNER_TEMP/maestro-android" \
-              .maestro/android-workspace.yaml
+              .maestro/office-workspace.yaml
 
       - name: Upload Android E2E screenshots and report
         if: always()
@@ -138,8 +138,8 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  ios-smoke:
-    name: iOS simulator · render and navigation smoke
+  ios-e2e:
+    name: iOS simulator · office journey
     runs-on: macos-26
     timeout-minutes: 45
     env:
@@ -235,13 +235,14 @@ jobs:
           launch_url="marcia-demo://?__expo_url=${manifest_url}&__expo_disable_onboarding=1&__expo_disable_fab=1&__expo_disable_auto_launch=1"
           xcrun simctl openurl "$simulator_udid" "$launch_url"
 
-      - name: Run iOS rendered navigation smoke
+      - name: Run rendered iOS office journey
         run: |
           maestro test --device "$(cat "$RUNNER_TEMP/ios-simulator-udid")" \
+            -e APP_ID=com.example.marciaescritorio.demo \
             --format=JUNIT \
             --output="$RUNNER_TEMP/maestro-ios.xml" \
             --test-output-dir="$RUNNER_TEMP/maestro-ios" \
-            .maestro/ios-smoke.yaml
+            .maestro/office-workspace.yaml
 
       - name: Upload iOS E2E screenshots and report
         if: always()

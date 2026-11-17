@@ -62,7 +62,7 @@ Request/response usam schemas estritos de `packages/contracts`. Derivar tenant e
 - [ ] Validar casos-limite monetários, fuso, datas, status e rollback da auditoria por testes de contrato/integração.
 - [x] Cadastro manual de compromissos, mudança de status financeiro e busca guiada/salva foram incluídos na UI; confirmar usabilidade com Márcia.
 - [ ] Completar CRUD/paginação/idempotência e calendário mensal conforme a Márcia validar a prioridade.
-- [ ] Executar iOS smoke no runner macOS; a jornada persistente completa continua Web e aguarda validação Android hospedada nesta etapa.
+- [ ] Executar e validar a jornada persistente completa no runner macOS iOS; o workflow nativo compartilha `office-workspace.yaml` com Android, mas o resultado da CI desta versão ainda precisa ser confirmado.
 
 ## Compatibilidade com migrações existentes
 

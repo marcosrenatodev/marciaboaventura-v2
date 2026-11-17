@@ -84,7 +84,7 @@ Usar pesquisas de tarefa com Márcia para ajustar posição; normas dão um piso
 
 ### Onda 1 — MVP pessoal utilizável
 
-- **Estado:** fatia local persistente implementada com login/setup one-shot, um owner/escritório, assuntos, processos manuais, tarefas, compromissos, receitas/despesas e consultas de jurisprudência salvas no D1 local. O app abre portais oficiais e ajuda a copiar a consulta; não recolhe decisões automaticamente. Web/Android E2E e iOS smoke são gates separados.
+- **Estado:** fatia local persistente implementada com login/setup one-shot, um owner/escritório, assuntos, processos manuais, tarefas, compromissos, receitas/despesas e consultas de jurisprudência salvas no D1 local. O app abre portais oficiais e ajuda a copiar a consulta; não recolhe decisões automaticamente. Web E2E é validado localmente; Android/iOS compartilham a jornada Maestro e precisam de aprovação CI na versão final.
 - Autenticação e tenant estão implementados localmente; avaliação de sessão/revogação completa, MFA, recovery, hardening e configuração de produção continuam pendentes.
 - A interface atual cobre Hoje, assuntos/processos manuais, agenda de tarefas/compromissos, financeiro enxuto e pesquisa guiada. Cadastro de cliente separado, notas, calendário mensal e CRUD completo (edição/remoção) ainda não estão completos.
 - Financeiro MVP deliberadamente curto: honorários previstos/recebidos e, se Márcia confirmar a rotina, despesas simples; sem nota fiscal, contabilidade, conciliação bancária ou cobrança automática.

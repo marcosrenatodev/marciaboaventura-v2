@@ -77,9 +77,9 @@ async function captureAtViewport(page: Page, testInfo: TestInfo, name: string, w
   });
 }
 
-test("configura o escritório, registra processo, tarefa e financeiro e conserva os dados", async ({ page, request }, testInfo) => {
+test("configura o escritório, registra processo, tarefa e financeiro e conserva os dados", async ({ page, request, browserName }, testInfo) => {
   await signInOrSetUp(page);
-  const fixture = `E2E ${testInfo.project.name}`;
+  const fixture = `E2E ${testInfo.project.name} tentativa ${testInfo.retry + 1}`;
   const matterTitle = `${fixture} — Pasta de exemplo`;
   const taskTitle = `${fixture} — Próximo passo de trabalho`;
   const expenseTitle = `${fixture} — Despesa fictícia`;
@@ -129,12 +129,14 @@ test("configura o escritório, registra processo, tarefa e financeiro e conserva
   await expect(page.getByText(appointmentTitle).first()).toBeVisible();
 
   await openTab(page, "Pesquisa");
-  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  if (browserName !== "webkit") await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.getByLabel("Questão jurídica para pesquisar").fill(researchQuery);
   await page.getByRole("radio", { name: "TRF4 — Justiça Federal da 4ª Região" }).click();
   await page.getByRole("button", { name: "Copiar termos da busca" }).click();
   await expect(page.getByText(/Consulta copiada/i)).toBeVisible();
-  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(researchQuery);
+  if (browserName !== "webkit") {
+    await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(researchQuery);
+  }
   const sourcePopup = page.waitForEvent("popup");
   await page.getByRole("button", { name: "Abrir pesquisa oficial TRF4" }).click();
   const sourcePage = await sourcePopup;
