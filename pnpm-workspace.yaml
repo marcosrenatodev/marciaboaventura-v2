@@ -1,0 +1,12 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# Allow lifecycle scripts only for locked binaries required by Vite/Expo/Workers.
+# Keep versions aligned with pnpm-lock.yaml when intentionally upgrading them.
+allowBuilds:
+  "@swc/core@1.15.11": true
+  "esbuild@0.21.5": true
+  "esbuild@0.25.12": true
+  "esbuild@0.28.2": true
+  "workerd@1.20261113.1": true
