@@ -81,15 +81,24 @@ jobs:
           nohup node e2e/start-api.mjs > "$RUNNER_TEMP/marcia-api.log" 2>&1 < /dev/null &
           nohup pnpm --filter @marcia/mobile exec expo start --dev-client --host localhost --port 8081 \
             > "$RUNNER_TEMP/marcia-metro.log" 2>&1 < /dev/null &
-          for attempt in $(seq 1 90); do
-            if curl --fail --silent http://127.0.0.1:8787/api/auth/get-session >/dev/null \
-              && curl --fail --silent http://127.0.0.1:8081/status | rg -q "packager-status:running"; then
-              exit 0
+          for attempt in $(seq 1 180); do
+            api_ready=0
+            metro_status=""
+            if curl --fail --silent --max-time 2 http://127.0.0.1:8787/api/auth/get-session >/dev/null; then
+              api_ready=1
+              metro_status="$(curl --fail --silent --max-time 2 http://127.0.0.1:8081/status || true)"
+              if [[ "$metro_status" == *"packager-status:running"* ]]; then
+                exit 0
+              fi
+            fi
+            if (( attempt % 15 == 0 )); then
+              echo "Waiting for local API and Metro (${attempt}/180; api_ready=${api_ready}; metro_status=${metro_status:-not ready})"
             fi
             sleep 1
           done
           cat "$RUNNER_TEMP/marcia-api.log"
           cat "$RUNNER_TEMP/marcia-metro.log"
+          curl --fail --silent --show-error --max-time 2 http://127.0.0.1:8081/status || true
           exit 1
 
       - name: Enable KVM for the Android emulator
@@ -219,15 +228,24 @@ jobs:
           nohup node e2e/start-api.mjs > "$RUNNER_TEMP/marcia-api.log" 2>&1 < /dev/null &
           nohup pnpm --filter @marcia/mobile exec expo start --dev-client --host localhost --port 8081 \
             > "$RUNNER_TEMP/marcia-metro.log" 2>&1 < /dev/null &
-          for attempt in $(seq 1 90); do
-            if curl --fail --silent http://127.0.0.1:8787/api/auth/get-session >/dev/null \
-              && curl --fail --silent http://127.0.0.1:8081/status | rg -q "packager-status:running"; then
-              exit 0
+          for attempt in $(seq 1 180); do
+            api_ready=0
+            metro_status=""
+            if curl --fail --silent --max-time 2 http://127.0.0.1:8787/api/auth/get-session >/dev/null; then
+              api_ready=1
+              metro_status="$(curl --fail --silent --max-time 2 http://127.0.0.1:8081/status || true)"
+              if [[ "$metro_status" == *"packager-status:running"* ]]; then
+                exit 0
+              fi
+            fi
+            if (( attempt % 15 == 0 )); then
+              echo "Waiting for local API and Metro (${attempt}/180; api_ready=${api_ready}; metro_status=${metro_status:-not ready})"
             fi
             sleep 1
           done
           cat "$RUNNER_TEMP/marcia-api.log"
           cat "$RUNNER_TEMP/marcia-metro.log"
+          curl --fail --silent --show-error --max-time 2 http://127.0.0.1:8081/status || true
           exit 1
 
       - name: Launch app bundle in the simulator
