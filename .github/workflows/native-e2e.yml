@@ -258,6 +258,36 @@ jobs:
             --test-output-dir="$RUNNER_TEMP/maestro-ios" \
             .maestro/office-workspace.yaml
 
+      - name: Capture iOS screen and runtime diagnostics
+        if: always()
+        run: |
+          simulator_udid="$(cat "$RUNNER_TEMP/ios-simulator-udid")"
+          screenshot="$RUNNER_TEMP/ios-screen.png"
+          xcrun simctl io "$simulator_udid" screenshot "$screenshot" || true
+          if [[ -f "$screenshot" ]]; then
+            cat > "$RUNNER_TEMP/read-screen.swift" <<'SWIFT'
+          import AppKit
+          import Vision
+          let imageURL = URL(fileURLWithPath: CommandLine.arguments[1])
+          guard let image = NSImage(contentsOf: imageURL) else { fatalError("Could not read simulator screenshot") }
+          var rect = CGRect(origin: .zero, size: image.size)
+          guard let cgImage = image.cgImage(forProposedRect: &rect, context: nil, hints: nil) else { fatalError("Could not decode simulator screenshot") }
+          let request = VNRecognizeTextRequest()
+          request.recognitionLevel = .accurate
+          try VNImageRequestHandler(cgImage: cgImage).perform([request])
+          for item in request.results ?? [] {
+            if let text = item.topCandidates(1).first?.string { print("SCREEN TEXT: \(text)") }
+          }
+          SWIFT
+            swift "$RUNNER_TEMP/read-screen.swift" "$screenshot"
+          fi
+          for log_file in "$RUNNER_TEMP/marcia-api.log" "$RUNNER_TEMP/marcia-metro.log"; do
+            if [[ -f "$log_file" ]]; then
+              echo "--- ${log_file##*/} (last 60 lines) ---"
+              tail -n 60 "$log_file"
+            fi
+          done
+
       - name: Upload iOS E2E screenshots and report
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -265,6 +295,7 @@ jobs:
           name: ios-native-e2e
           path: |
             ${{ runner.temp }}/maestro-ios.xml
+            ${{ runner.temp }}/ios-screen.png
             ${{ runner.temp }}/maestro-ios/**/*.png
           if-no-files-found: ignore
           retention-days: 7

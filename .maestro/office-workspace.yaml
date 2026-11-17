@@ -4,7 +4,8 @@ appId: ${APP_ID}
     text: "Wait"
     optional: true
 - extendedWaitUntil:
-    visible: "Bem-vinda"
+    visible:
+      id: "auth-welcome-title"
     timeout: 60000
 - tapOn: "Primeira configuração do escritório"
 - tapOn: "Seu nome"
