@@ -1,0 +1,116 @@
+appId: ${APP_ID}
+---
+- tapOn:
+    text: "Wait"
+    optional: true
+- extendedWaitUntil:
+    visible: "Bem-vinda"
+    timeout: 60000
+- tapOn: "Primeira configuração do escritório"
+- tapOn: "Seu nome"
+- inputText: "Márcia E2E Fictícia"
+- tapOn: "E-mail"
+- inputText: "marcia-e2e@example.test"
+- tapOn: "Senha"
+- inputText: "SomenteE2ETeste-SemSegredo-2026-!"
+- hideKeyboard
+- swipe:
+    start: "90%, 60%"
+    end: "90%, 25%"
+- tapOn: "Código de configuração"
+- inputText: "marcia-local-e2e-setup-token-only-no-client-data-v1"
+- hideKeyboard
+- swipe:
+    start: "90%, 75%"
+    end: "90%, 25%"
+- tapOn: "Criar conta responsável"
+- assertVisible: "Seu espaço"
+- assertVisible: "Escritório conectado · dados da API"
+- tapOn: "Processos"
+- tapOn: "Nome do assunto"
+- inputText: "E2E Android — Pasta de exemplo"
+- hideKeyboard
+- swipe:
+    start: "90%, 75%"
+    end: "90%, 25%"
+- tapOn: "Cadastrar assunto"
+- assertVisible: "Assunto cadastrado pela API."
+- swipe:
+    start: "90%, 75%"
+    end: "90%, 25%"
+- tapOn: "Tribunal do processo"
+- inputText: "Tribunal de Justiça do Paraná"
+- swipe:
+    start: "90%, 60%"
+    end: "90%, 25%"
+- tapOn: "Estado ou região do processo"
+- inputText: "PR"
+- hideKeyboard
+- swipe:
+    start: "90%, 75%"
+    end: "90%, 25%"
+- tapOn: "Cadastrar processo"
+- assertVisible: "Processo cadastrado pela API. Nenhum tribunal foi consultado."
+- tapOn: "Agenda"
+- tapOn: "Título da tarefa"
+- inputText: "E2E Android — Próximo passo"
+- hideKeyboard
+- tapOn: "Cadastrar tarefa"
+- assertVisible: "Tarefa cadastrada na API."
+- tapOn: "Título do compromisso"
+- inputText: "E2E Android — Reunião fictícia"
+- hideKeyboard
+- tapOn: "Data do compromisso (AAAA-MM-DD)"
+- inputText: "2026-12-04"
+- hideKeyboard
+- swipe:
+    start: "90%, 75%"
+    end: "90%, 35%"
+- tapOn: "Horário de início (HH:MM)"
+- inputText: "14:00"
+- hideKeyboard
+- tapOn: "Horário de término (HH:MM)"
+- inputText: "15:00"
+- hideKeyboard
+- tapOn: "Cadastrar compromisso"
+- assertVisible: "Compromisso cadastrado no escritório."
+- tapOn: "Financeiro"
+- tapOn: "Despesa"
+- tapOn: "Descrição do lançamento"
+- inputText: "E2E Android — Despesa fictícia"
+- swipe:
+    start: "90%, 60%"
+    end: "90%, 25%"
+- tapOn: "Valor em reais e centavos"
+- inputText: "125,50"
+- hideKeyboard
+- swipe:
+    start: "90%, 75%"
+    end: "90%, 30%"
+- tapOn: "Data de vencimento opcional no formato AAAA-MM-DD"
+- inputText: "2030-01-01"
+- hideKeyboard
+- swipe:
+    start: "90%, 75%"
+    end: "90%, 25%"
+- tapOn: "Cadastrar lançamento"
+- assertVisible: "Lançamento confirmado pela API."
+- assertVisible: "Vence em 01/01/2030"
+- tapOn: "Marcar como pago: E2E Android — Despesa fictícia"
+- assertVisible: "Pago"
+- tapOn: "Pesquisa"
+- tapOn: "Questão jurídica para pesquisar"
+- inputText: "responsabilidade civil falha serviço"
+- hideKeyboard
+- swipe:
+    start: "90%, 75%"
+    end: "90%, 35%"
+- tapOn: "TRF4"
+- swipe:
+    start: "90%, 75%"
+    end: "90%, 35%"
+- tapOn: "Salvar busca no escritório"
+- swipe:
+    start: "90%, 75%"
+    end: "90%, 35%"
+- assertVisible: "responsabilidade civil falha serviço"

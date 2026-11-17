@@ -1,0 +1,6 @@
+# Valores fictícios exclusivos para desenvolvimento local. Copie para .dev.vars.
+# Gere segredos aleatórios locais com: openssl rand -base64 32
+AUTH_BASE_URL=http://127.0.0.1:8787
+AUTH_SECRET=EXEMPLO_FICTICIO_NAO_USAR_A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6
+WEB_ORIGIN=http://localhost:8081
+SETUP_OWNER_TOKEN=EXEMPLO_FICTICIO_NAO_USAR_Z9y8X7w6V5u4T3s2R1q0P9o8N7m6L5k4

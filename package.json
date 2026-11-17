@@ -1,8 +1,12 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "@marcia/site",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "packageManager": "pnpm@10.27.0",
+  "engines": {
+    "node": ">=22.13 <27"
+  },
   "scripts": {
     "dev": "vite --port 3000",
     "build": "vite build",
@@ -10,7 +14,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e:web:build": "node scripts/e2e-build-web.mjs",
+    "e2e:web": "pnpm run e2e:web:build && playwright test",
+    "typecheck:e2e": "tsc --project tsconfig.e2e.json"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -66,6 +73,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
+    "@playwright/test": "1.65.1",
     "@tailwindcss/typography": "^0.5.16",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.0.0",

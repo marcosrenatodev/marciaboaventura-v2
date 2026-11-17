@@ -1,73 +1,72 @@
-# Welcome to your Lovable project
+# Márcia — site e plataforma jurídica
 
-## Project info
+Este repositório mantém o site institucional público no diretório raiz e inicia, em aplicações separadas, uma plataforma de produtividade jurídica para Márcia. O site não recebe dados de clientes; o produto autenticado não é publicado no GitHub Pages.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Estado atual
 
-## How can I edit this code?
+- `src/`: site institucional Vite/React original e a demonstração fictícia `/escritorio`. Essa rota é pública, usa exemplos em memória e não oferece controle de acesso; ela será publicada junto com o site quando `main` disparar Pages.
+- `apps/mobile/`: app Expo/React Native em TypeScript para Web, Android e iOS. O app tem login/setup owner e fluxos persistentes de assuntos, processos manuais, tarefas, compromissos, financeiro simples e pesquisa jurídica guiada.
+- `apps/api/`: Cloudflare Worker + D1 local com Better Auth e endpoints de domínio protegidos por tenant.
+- `packages/contracts/`: contratos TypeScript/Zod compartilhados.
+- `docs/PLANO_EXECUCAO_MARCIA.md`: visão completa, estado, decisões e próximo passo de execução.
 
-There are several ways of editing your application.
+Esta é uma primeira fatia funcional, ainda não um produto pronto para dados de clientes: não consulta tribunais, não monitora publicações, não calcula prazo, não conecta Drive/OneDrive, assinatura, jurisprudência licenciada ou IA. Use apenas dados inventados até concluir revisão de segurança e ativar provedores por contrato/credenciais. Os ZIPs fornecidos contêm informação jurídica/pessoal e não devem ser copiados para código, prompt, screenshot, fixture ou teste.
 
-**Use Lovable**
+## Requisitos e instalação
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Use Node `22.14.0` (`.node-version`) e pnpm `10.27.0` (`packageManager`). Na raiz:
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+pnpm install --frozen-lockfile
 ```
 
-**Edit a file directly in GitHub**
+O workspace libera scripts de build apenas para as versões travadas de SWC, esbuild e workerd necessárias às ferramentas atuais. O lockfile é único na raiz.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Comandos de desenvolvimento
 
-**Use GitHub Codespaces**
+### Site institucional (root)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```sh
+pnpm dev
+pnpm lint
+pnpm test
+pnpm build
+```
 
-## What technologies are used for this project?
+O workflow `pages.yml` continua publicando somente o build do site raiz no GitHub Pages.
 
-This project is built with:
+### App Expo
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```sh
+pnpm --filter @marcia/mobile start
+pnpm --filter @marcia/mobile export:web
+pnpm --filter @marcia/mobile typecheck
+pnpm --filter @marcia/mobile lint
+```
 
-## How can I deploy this project?
+O Android requer SDK/JDK/emulador ou dispositivo. Build iOS requer macOS e Xcode. A exportação web é artefato local, não publicação privada.
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+### API Cloudflare
 
-## Can I connect a custom domain to my Lovable project?
+```sh
+pnpm --filter @marcia/api typecheck
+pnpm --filter @marcia/api build
+pnpm --filter @marcia/api db:migrate:local
+pnpm --filter @marcia/api dev
+```
 
-Yes, you can!
+O Worker está configurado para desenvolvimento local, sem rota pública, com deploy bloqueado. Não apontar para D1 remoto nem adicionar segredo ao Git. Consulte o README específico da API antes de executar migrações ou configurar secrets.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Contratos
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```sh
+pnpm --filter @marcia/contracts typecheck
+```
+
+## CI e testes
+
+`.github/workflows/ci.yml` valida PRs e pushes a `main`, incluindo lint, testes, builds e Playwright E2E em Chromium desktop/mobile, site público e WebKit mobile no runner hospedado. `.github/workflows/native-e2e.yml` constrói Android e iOS e executa Maestro: Android cobre onboarding, assuntos, processo manual, tarefa, compromisso, financeiro e busca TRF4; iOS cobre smoke de renderização/navegação. Em 17/11/2026 o E2E Web passou 3/3 localmente. O último E2E Android local não concluiu porque este host não tem KVM e o System UI do emulador entrou em ANR; a execução anterior passou em versão anterior do app. O primeiro run hospedado ainda está pendente. `.github/workflows/pages.yml` continua publicando somente o site público raiz em push a `main`, sem publicar app/API. Comandos locais: `pnpm e2e:web` e `pnpm typecheck:e2e`.
+
+## Continuidade e decisões
+
+Leia [o plano mestre](docs/PLANO_EXECUCAO_MARCIA.md) antes de continuar. Instruções curtas por pasta ficam em `AGENTS.md`/`CLAUDE.md`; decisões arquiteturais com ressalvas ficam em `docs/adr/`; a pesquisa com fontes está em `docs/plano/02_PESQUISA_EVIDENCIAS.md`.
