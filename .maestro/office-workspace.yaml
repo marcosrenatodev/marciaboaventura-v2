@@ -75,6 +75,9 @@ appId: ${APP_ID}
 - tapOn: "Cadastrar compromisso"
 - assertVisible: "Compromisso cadastrado no escritório."
 - tapOn: "Financeiro"
+- swipe:
+    start: "90%, 75%"
+    end: "90%, 35%"
 - tapOn: "Despesa"
 - tapOn: "Descrição do lançamento"
 - inputText: "E2E Android — Despesa fictícia"
