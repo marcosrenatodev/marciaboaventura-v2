@@ -8,7 +8,7 @@ appId: ${APP_ID}
     optional: true
 - extendedWaitUntil:
     visible:
-      id: "auth-welcome-title"
+      text: "Bem-vinda"
     timeout: 60000
 - tapOn: "Primeira configuração do escritório"
 - tapOn: "Seu nome"
@@ -110,9 +110,13 @@ appId: ${APP_ID}
     start: "90%, 75%"
     end: "90%, 30%"
 - tapOn: "Marcar como pago: E2E Android — Despesa fictícia"
-- swipe:
-    start: "90%, 30%"
-    end: "90%, 70%"
+- scrollUntilVisible:
+    element: "Lançamento atualizado."
+    direction: UP
+- assertVisible: "Lançamento atualizado."
+- scrollUntilVisible:
+    element: "Pago"
+    direction: DOWN
 - assertVisible: "Pago"
 - tapOn: "Pesquisa"
 - tapOn: "Questão jurídica para pesquisar"
