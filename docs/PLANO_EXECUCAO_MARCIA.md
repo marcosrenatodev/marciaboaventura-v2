@@ -49,6 +49,7 @@ O site institucional atual permanece no root, público e deployado separadamente
 - [03 — Arquitetura, IA e Cloudflare](plano/03_ARQUITETURA_IA_CLOUDFLARE.md): TypeScript, D1/R2/Workers, busca/chat com citações, conectores e sistema de habilidades extensível.
 - [04 — Segurança, CI, testes e operação](plano/04_SEGURANCA_CI_TESTES_OPERACAO.md): proteção de dados, CI no GitHub, E2E Android/iOS/web, observabilidade, recuperação e processo de release.
 - [05 — Modelo de domínio do MVP](plano/05_MODELO_DOMINIO_MVP.md): entidades D1 e contratos para processos, tarefas, agenda e financeiro, com isolamento e aceite sintético.
+- [06 — Credenciais e acesso judicial](plano/06_CREDENCIAIS_E_ACESSO_JUDICIAL.md): separa acesso da advogada, API pública, credencial institucional, integração do Domicílio e acesso aos sistemas locais.
 - [Índice de documentação](README.md): mapa do repositório e documentos de continuidade.
 
 ## Estado e próxima ação
@@ -96,7 +97,7 @@ O site institucional atual permanece no root, público e deployado separadamente
 3. Commitar e enviar para o branch do PR #1 o fix de clipboard/retry WebKit e a jornada Maestro comum em `.maestro/office-workspace.yaml`; acompanhar os novos runs e corrigir falhas hospedadas até passar CI WebKit/Android/iOS. Os runs anteriores são evidência útil, mas não validam esse novo commit.
 4. Revisar relatório, screenshots e estado final dos checks em GitHub; atualizar este plano com IDs, SHA e resultados reais. Não mesclar nem usar Pages para publicar o app: o workflow Pages só publica o site institucional em `main`.
 5. Fazer walkthrough com Márcia e um dispositivo iOS/Android real; observar 375/768/1440 px, teclado, zoom, leitor de tela, safe areas e vocabulário, usando dados fictícios.
-6. Antes de piloto privado: revisão de segurança/privacidade, recovery, migrações/restore, segredos, acessibilidade e operação. Confirmar deploy privado Cloudflare e autorizar integrações por contrato/credenciais; não usar dados reais ou publicar até passar esses gates.
+6. Antes de piloto privado: revisão de segurança/privacidade, recovery, migrações/restore, segredos, acessibilidade e operação. Para processos, provar primeiro leitura do DataJud/DJEN; obter orientação escrita do CNJ sobre o uso do DataJud no software interno remunerado e validar host/termos de produção do DJEN. Só solicitar API institucional do Domicílio/Data Lake depois de confirmar elegibilidade, escopo, custo e credenciais do CNPJ. Nunca colocar gov.br, e-CPF ou certificado pessoal de Márcia no app; acesso a conteúdo do Domicílio exige ação humana explícita e auditada. Não usar dados reais nem publicar até passar esses gates.
 7. Ao parar, atualizar este estado com o que realmente rodou, erros, arquivos tocados e próximo comando literal.
 
 ## Registro de decisões e perguntas abertas

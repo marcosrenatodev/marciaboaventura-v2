@@ -1,0 +1,87 @@
+# Credenciais e acesso a serviços judiciais
+
+**Pesquisa verificada em 17/11/2026.** Este relatório distingue o acesso pessoal de Márcia como advogada dos acessos de integração do aplicativo. Uma credencial profissional não é automaticamente uma credencial de API; nenhuma senha, certificado privado ou token pessoal deve ser compartilhado com o aplicativo.
+
+## Conclusão executiva
+
+Há fontes oficiais que podem ser consultadas diretamente, sem contratar um SaaS de monitoramento. O DataJud tem API pública com uma chave publicada pelo CNJ; o DJEN documenta operações GET públicas sem autenticação. Acesso ao Domicílio Judicial pode ser feito por Márcia com e-CPF ou gov.br prata/ouro, inclusive em “Meus representados” quando ela for representante ativa no processo.
+
+Há, porém, três caminhos distintos, que não devem ser confundidos:
+
+1. **Consulta pública de dados:** DataJud API Pública e GETs públicos do DJEN. Não pedem login OAB para essas consultas, mas seus termos, limites, atualidade, produção e possibilidade de uso dentro de produto precisam ser respeitados.
+2. **Acesso individual a comunicações destinadas a Márcia ou a representados:** login pessoal e perfil autorizado no Domicílio Judicial. Isso não dá ao app acesso automático nem permissão para abrir comunicações em segundo plano.
+3. **Integração institucional/dados centralizados:** APIs do Domicílio para instituições e API de consulta ao Data Lake do CNJ têm cadastro, credenciais, requisitos e autorizações próprias. Não são obtidas apenas informando o número OAB/PR.
+
+**Recomendação de produto:** construir nossos próprios adapters para fontes oficiais documentadas e começar por dados públicos. Manter fallback manual com links oficiais. Só contratar provedor quando um teste mostrar uma lacuna que justifique preço, cobertura, SLA ou licença. A rota central do CNJ e o Domicílio via API ficam atrás de gates de elegibilidade e autorização.
+
+## Matriz de acesso por serviço
+
+| Serviço | Acesso de Márcia como advogada | Acesso do aplicativo/desenvolvedor | Requisitos, limites e decisão |
+| --- | --- | --- | --- |
+| **DataJud — API Pública** | Não exige OAB, certificado pessoal ou login para consulta pública. | Usa chave pública `Authorization: APIKey …` publicada pelo DPJ/CNJ; a chave pode mudar. Há endpoints por tribunal, inclusive TJPR, TJSC, TJRS e TRF4. | Retorna metadados/movimentações de processos públicos; não substitui o portal do tribunal, não inclui sigilosos e o CNJ não garante atualidade. Os termos publicados dizem uso legal, não comercial e autorizado e vedam venda/distribuição/exploração comercial de dados derivados. Acessível para prova técnica, mas **não ligar a produção comercial sem obter orientação escrita do CNJ sobre o uso interno profissional e a forma de exibição/cache**. Citar CNJ/DataJud. |
+| **DataJud — API Elastic interna** | Não é uma credencial de advogada. | Acesso institucional de equipes técnicas do Judiciário, mediante solicitação do órgão, pessoa responsável e IP previamente cadastrado. | Não solicitar como desenvolvedor privado nem tentar reutilizar a chave pública nesse endpoint. A API Pública do DataJud é outro serviço. |
+| **CNJ — API central do Data Lake (Res. 574/2024)** | OAB/PR não concede acesso automaticamente. | A entidade pública/privada faz requerimento formal ao CNJ e assina instrumento próprio; autenticação técnica/integração é vinculada à entidade e aos controles aprovados. | Portaria 316/2024 consolidada exige políticas de privacidade, segurança e auditoria, disponibilidade superior a 95% e capacidade de identidade/acesso de 200 mil usuários únicos por mês. A Portaria 442/2026 acrescenta comprovação de habilitação jurídica e regularidade fiscal/social/trabalhista da entidade privada, nos termos aplicáveis da Lei 14.133. A Resolução 574 prevê custeio limitado ao custo efetivo, podendo haver bilhetagem de nuvem, e o CNJ pode exigir disponibilização não onerosa do produto ao Judiciário via PDPJ-Br. **Não é rota presumidamente gratuita nem adequada ao pequeno MVP; verificar elegibilidade, custo e interpretação dos requisitos antes de investir.** |
+| **CNJ — lista diária de processos modificados** | Não exige credencial profissional para a listagem pública prevista em norma. | A Portaria 316/2024 prevê que o CNJ publique relação diária de processos públicos movimentados no dia anterior. | O endereço, formato, histórico, condições de uso e estabilidade do feed ainda não foram localizados/confirmados. Criar tarefa de pesquisa antes de codificar; não presumir que seja um webhook ou feed contratado. |
+| **DJEN — consultas GET públicas** | Não exigem OAB para consulta pública. | Swagger declara GETs públicos sem autenticação; operações de login/gestão são exclusivas dos tribunais. Há rate limits. | É fonte de publicações/comunicações para advogados, não API universal de qualquer andamento. O Swagger acessível está em homologação; confirmar schema, endpoint GET de produção, filtros e termos antes de operar. Não usar POST/gestão nem tratar falta de resultado como ausência de intimação. |
+| **Domicílio Judicial — acesso web pessoal** | CPF via e-CPF ICP-Brasil ou gov.br nível prata/ouro. Advogada ativa no processo pode selecionar “Meus representados”; o vínculo é informado pelo tribunal. O acesso a processo sigiloso depende da autorização/perfil concedido. | O app não recebe a senha gov.br, senha do certificado nem arquivo A1/A3. Para a primeira versão, oferecer link para o portal e uma rotina humana de conferência/registro. | A tela pode consultar e dar ciência a comunicações. Resolução 455/2022 prevê que o acesso ao conteúdo por portal **ou integração via API** aperfeiçoa a comunicação e pode iniciar prazo. Nunca buscar/abrir o inteiro teor automaticamente, nem marcar ciência, sem ação explícita e auditada de Márcia. |
+| **Domicílio Judicial — acesso web institucional** | Pessoa jurídica acessa mediante e-CNPJ e gestão de perfis internos; o CNPJ pode cadastrar administradores/gestores/prepostos. | Um usuário autorizado da instituição usa o portal para gestão. Isso não é automaticamente autorização para o app consultar “Meus representados” pessoais da advogada. | Não confundir CNPJ do escritório com os CNPJs dos clientes. Confirmar os perfis, destinatários e limites de acesso antes de cadastrar credenciais institucionais. |
+| **Domicílio Judicial — API institucional** | O-CPF de Márcia pode aparecer no header de auditoria, mas OAB/PR não é o client secret da API. | Documentação PDPJ indica onboarding por CNPJ/e-CNPJ: representante do CNPJ entra no portal, aceita termos e solicita “Gerenciar credenciais API” no GeCli/PDPJ-Br; recebe `client_id`/`client_secret`, obtém token pelo SSO CNJ e envia `On-behalf-Of` com CPF do usuário executor. A API também usa `tenantId` da instituição. | A documentação descreve APIs para instituições consumirem expedientes destinados a elas. **Não presumir que o CNPJ do escritório pode consultar por API todos os processos dos clientes que Márcia representa**, mesmo que ela veja “Meus representados” na interface pessoal. Pedir confirmação escrita ao CNJ sobre escopo, perfis elegíveis, API de produção, endpoints de listagem versus abertura de conteúdo, revogação e efeito sobre ciência/prazo. |
+| **PJe/eproc/Projudi e portais locais** | Cada tribunal exige cadastro/perfil próprio. O certificado ICP-Brasil pessoal pode ser aceito para autenticação ou atos que o sistema exija; PJe pode exigir cadastro/PJeOffice para assinatura. | Não há uma “API OAB/PR” universal para ler todos os processos. Integrar somente API oficial documentada e autorizada por tribunal; do contrário, abrir o portal com link e deixar a conferência com a advogada. | Certificado OAB é identidade/autenticação pessoal, não token de desenvolvedor, nem permissão de robô para reutilizar sessão. Proibido automatizar login, guardar senha/certificado ou contornar CAPTCHA/MFA. |
+| **Provedores SaaS (Jusbrasil/BuscaProcessos/outros)** | Conta e permissão conforme contrato do fornecedor. | Credencial de desenvolvedor/API e contrato/plano próprios; não usar a senha OAB como substituto. | Cotar somente se fonte oficial não entregar uma necessidade comprovada. Verificar escopo/cobertura por tribunal, atrasos, licenças, cache/redistribuição, SLA, segurança, suboperadores, exportação e custo total. |
+
+## Diferença entre certificado OAB, conta profissional e API key
+
+- **Número OAB/UF:** identifica a inscrição profissional. Não é uma senha nem uma API key.
+- **Certificado digital ICP-Brasil/e-CPF emitido em nome da advogada:** prova identidade em certos fluxos e assina atos. A página do CNJ orienta que o certificado do advogado seja pessoal, em nome dele — não do escritório. A OAB/PR/AC-OAB pode oferecer emissão; isso não cria acesso universal a todas as APIs.
+- **Conta gov.br:** para acesso individual ao Domicílio, conta prata ou ouro, se o serviço aceitar esse fluxo.
+- **Chave pública DataJud:** chave de consumo público, divulgada pelo CNJ; não comprova que o consumidor é advogado nem autoriza dados sigilosos.
+- **Client ID/secret do Domicílio:** credencial de integração emitida no fluxo institucional CNPJ/GeCli; fica somente no backend e é auditada junto a um CPF via `On-behalf-Of`.
+- **Acesso à API do Data Lake:** credenciamento institucional, requisitos técnicos, aprovação e instrumento; não se obtém por apresentar carteira OAB.
+
+Nunca pedir para Márcia colar senha gov.br, senha do certificado, chave privada, arquivo A1/PFX ou código MFA em “Configurações do app”. A assinatura/consulta profissional deve ocorrer no ambiente oficial, ou por fluxo formal de delegação que preserve identidade, consentimento, revogação e auditoria.
+
+## Plano de solicitação e implantação
+
+### A. Acesso profissional de Márcia
+
+1. Conferir se Márcia tem e-CPF ICP-Brasil válido (inclusive certificado OAB, se já usa) e conta gov.br prata/ouro; isso é para acesso pessoal, não para o Worker.
+2. Confirmar que o CPF dela consta como advogada/representante ativa nos processos; só então aparece “Meus representados” no Domicílio.
+3. Validar o acesso pelo navegador oficial, com um caso de teste autorizado. Revisar quais ações apenas listam e quais abrem conteúdo/registram ciência.
+4. Para cada tribunal local, verificar cadastro profissional, MFA/PJeOffice/certificado e eventual notificação nativa do portal. Guardar somente URL oficial e anotação de verificação até haver API pública/contratada.
+5. Não entregar senha/certificado de Márcia a desenvolvedor, automação, extensão ou aplicativo móvel.
+
+### B. Credencial do aplicativo/desenvolvedor
+
+1. **DataJud público:** prova com chave publicada e poucos números públicos conhecidos dos quatro alvos (TJPR, TJSC, TJRS, TRF4). Medir cobertura/latência comparando com fonte oficial. Aplicar limite baixo, cache de curto prazo, atribuição de fonte, estado “última consulta” e backoff. Antes de produção, enviar consulta formal ao CNJ sobre compatibilidade com o uso interno comercial do escritório e a forma permitida de derivar/apresentar os dados.
+2. **DJEN:** baixar/obter OpenAPI completo e confirmar GETs no host de produção, contrato/termos, rate-limit, filtros, paginação, eventos repetidos e comportamento de histórico. Implementar só GETs documentados e prova sintética antes de processar qualquer processo real.
+3. **Domicílio API:** não começar até responder por escrito: (a) se escritório de advocacia com CNPJ pode solicitar acesso; (b) se API serve comunicações dos CNPJs destinatários apenas ou também representados de advogada; (c) perfis/endpoints necessários; (d) qual chamada abre conteúdo e inicia ciência; (e) homologação/produção e procedimento de revogação. Se aprovado, obter e-CNPJ, aceitar termos no GeCli, solicitar API nos ambientes, configurar client/secret apenas como segredo Cloudflare no backend, e testar com comunicação de homologação.
+4. **Data Lake CNJ:** antes de requerer, verificar se a entidade suporta e documenta os requisitos de segurança, privacidade, auditoria, disponibilidade e gestão de identidades; reunir ato constitutivo/CNPJ e documentos de regularidade exigidos pela Portaria 442/2026; preparar justificativa/canvas; pedir estimativa de bilhetagem, instrumento, uso e eventual obrigação de oferta à PDPJ-Br. Só prosseguir se cobertura/custo fizer sentido.
+5. **Portais locais:** abrir processo de integração por tribunal apenas com documentação e autorização de seu serviço. O app não recebe token OAB da advogada para operar como se fosse ela.
+6. **SaaS:** solicitar trial/proposta somente para as lacunas medidas, comparando termos de dados derivados e cancelamento. Implementar interface de provider plugável para podermos trocar o fornecedor ou desligá-lo.
+
+## Controles de segurança e de prazos no aplicativo
+
+- Credencial institucional por escritório/tenant; cifra em repouso e envelope encryption por ambiente; segredo nunca volta ao frontend ou Expo; rotacionar/revogar e registrar responsável.
+- Autorização de leitura por processo/cliente e menor escopo. Não indexar ou persistir o inteiro teor do Domicílio sem autorização explícita e avaliação de sigilo/LGPD.
+- Requests ao Domicílio devem separar “listar comunicação” de “abrir conteúdo/ciência”. A ação com possível efeito processual exige confirmação explícita, nome do usuário, hora/fonte e log imutável; nunca rodar em cron/auto refresh.
+- Prazo mostrado como “a conferir” até a advogada validar a comunicação no sistema oficial. O app guarda fonte, status, horário e link, não declara ciência nem calcula prazo automaticamente no MVP.
+- Circuit breaker e reconciliação: falha de API não significa ausência de publicação. Mostrar última consulta e cobertura conhecida; alertar que o portal oficial continua sendo a referência.
+- Sanitizar logs; não registrar senha, certificado, access token, corpo de comunicação ou documento em Actions, observabilidade, Workers AI Gateway ou analytics.
+
+## Perguntas abertas a CNJ/PDPJ-Br antes de produção
+
+1. O uso da API Pública do DataJud dentro de um software interno de um escritório, que presta serviços jurídicos remunerados, se enquadra na restrição de finalidade “não comercial”? Quais apresentação, cache, exportação, derivação e citação são permitidos?
+2. O processo atual de API central do Data Lake aceita pequeno escritório? Como se aplicam o requisito de 200 mil usuários únicos/mês e a obrigação de custeio a uma aplicação de uso próprio? Qual é a bilhetagem e o instrumento atual?
+3. O CNPJ do escritório pode obter API do Domicílio para comunicações relacionadas a clientes que Márcia representa, ou a API é apenas para comunicações destinadas ao próprio CNPJ? Há endpoint autenticado de lista que não registra ciência?
+4. Qual ação exata da API (consulta da lista, consulta de detalhes, download do documento, “dar ciência”) conta como acesso ao teor e inicia o prazo, conforme art. 20 da Resolução 455?
+5. Qual Swagger/host de produção documenta GET público de comunicações/cadernos no DJEN e qual é a política para consumo por aplicação privada?
+
+## Fontes oficiais e normativas
+
+- [CNJ — API Pública do DataJud](https://www.cnj.jus.br/sistemas/datajud/api-publica/), [acesso e chave pública](https://datajud-wiki.cnj.jus.br/api-publica/acesso/), [lista de endpoints por tribunal](https://datajud-wiki.cnj.jus.br/api-publica/endpoints/), [termo de uso](https://datajud-wiki.cnj.jus.br/api-publica/termo-uso/) e [Portaria 374/2026](https://atos.cnj.jus.br/atos/detalhar/6972).
+- [CNJ — Resolução 574/2024](https://atos.cnj.jus.br/atos/detalhar/5708), [Portaria 316/2024 consolidada](https://atos.cnj.jus.br/atos/detalhar/5792), [alteração 442/2026](https://atos.cnj.jus.br/atos/detalhar/7057) e [GeCli/PDPJ-Br](https://docs.pdpj.jus.br/servicos-negociais/GeCli/).
+- [PDPJ-Br — documentação do Domicílio Judicial e APIs institucionais](https://docs.pdpj.jus.br/servicos-negociais/domicilio-judicial-eletronico/), [FAQ CNJ para advogados/representados](https://www.cnj.jus.br/tecnologia-da-informacao-e-comunicacao/justica-4-0/domicilio-judicial-eletronico/perguntas-frequentes/), [manual do usuário](https://www.cnj.jus.br/wp-content/uploads/2025/02/manual-domicilio-ed3-2025-1.pdf) e [Resolução 455/2022 consolidada](https://atos.cnj.jus.br/atos/detalhar/4509).
+- [CNJ — Swagger público do DJEN](https://hcomunicaapi.cnj.jus.br/swagger/index.html) e [orientações aos tribunais](https://www.cnj.jus.br/programas-e-acoes/processo-judicial-eletronico-pje/comunicacoes-processuais/orientacoes-aos-tribunais/).
+- [CNJ — certificação digital para PJe](https://www.cnj.jus.br/programas-e-acoes/processo-judicial-eletronico-pje/certificacao-digital-2/) e [OAB/PR — Certificado Digital](https://simplifica.oabpr.org.br/certificados).
+
+**Status:** pesquisa registrada; nenhuma credencial pessoal, integração CNJ, client/secret de Domicílio, autorização Data Lake ou fornecedor de acompanhamento está configurado neste MVP. Próximo trabalho: resolver as perguntas abertas e executar provas read-only em homologação/produção conforme autorização, sem inserir dados sigilosos.

@@ -2,6 +2,8 @@
 
 > Pesquisa acessada em 17/11/2026. Use os links oficiais/primários; documentação de API e termos devem ser revisitados antes de contratar e antes de cada release que dependa deles. Marketing do fornecedor prova que o produto é oferecido, não que a cobertura ou a qualidade tenham sido auditadas por nós.
 
+> A matriz prática de credenciais, diferenças entre acesso pessoal de advogada e integração de desenvolvedor, riscos de ciência/prazo no Domicílio e roteiro de solicitação está em [06 — Credenciais e acesso judicial](06_CREDENCIAIS_E_ACESSO_JUDICIAL.md).
+
 ## 1. Projeto e arquivos de exemplo
 
 ### Repositório atual
