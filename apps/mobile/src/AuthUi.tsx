@@ -9,7 +9,7 @@ export function AuthFrame({ title, subtitle, children }: PropsWithChildren<{ tit
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
           <Text style={styles.brand}>MÁRCIA BOAVENTURA</Text>
-          <Text accessibilityRole="header" style={styles.title}>{title}</Text>
+          <Text testID={title === "Bem-vinda" ? "auth-welcome-title" : undefined} accessibilityRole="header" style={styles.title}>{title}</Text>
           <Text style={styles.subtitle}>{subtitle}</Text>
           {children}
         </View>

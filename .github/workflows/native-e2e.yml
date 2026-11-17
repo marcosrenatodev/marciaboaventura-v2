@@ -78,6 +78,19 @@ jobs:
           MARCIA_E2E_KEEP_DB: "1"
         run: |
           set -euo pipefail
+          mve_setup_token="$(openssl rand -hex 32)"
+          mve_auth_secret="$(openssl rand -hex 32)"
+          mve_password="$(openssl rand -hex 24)"
+          echo "::add-mask::$mve_setup_token"
+          echo "::add-mask::$mve_auth_secret"
+          echo "::add-mask::$mve_password"
+          {
+            echo "MARCIA_E2E_SETUP_TOKEN=$mve_setup_token"
+            echo "MARCIA_E2E_AUTH_SECRET=$mve_auth_secret"
+            echo "MARCIA_E2E_PASSWORD=$mve_password"
+          } >> "$GITHUB_ENV"
+          export MARCIA_E2E_SETUP_TOKEN="$mve_setup_token"
+          export MARCIA_E2E_AUTH_SECRET="$mve_auth_secret"
           nohup node e2e/start-api.mjs > "$RUNNER_TEMP/marcia-api.log" 2>&1 < /dev/null &
           nohup pnpm --filter @marcia/mobile exec expo start --dev-client --host localhost --port 8081 \
             > "$RUNNER_TEMP/marcia-metro.log" 2>&1 < /dev/null &
@@ -128,7 +141,7 @@ jobs:
             adb reverse tcp:8787 tcp:8787
             adb shell appops set com.example.marciaescritorio.demo SYSTEM_ALERT_WINDOW allow
             adb shell "am start -a android.intent.action.VIEW -d 'marcia-demo://?__expo_url=http%3A%2F%2F127.0.0.1%3A8081&__expo_disable_onboarding=1&__expo_disable_fab=1&__expo_disable_auto_launch=1'"
-            maestro test --device emulator-5554 -e APP_ID=com.example.marciaescritorio.demo --format=JUNIT --output="$RUNNER_TEMP/maestro-android.xml" --test-output-dir="$RUNNER_TEMP/maestro-android" .maestro/office-workspace.yaml
+            maestro test --device emulator-5554 -e APP_ID=com.example.marciaescritorio.demo -e E2E_PASSWORD="$MARCIA_E2E_PASSWORD" -e E2E_SETUP_TOKEN="$MARCIA_E2E_SETUP_TOKEN" --format=JUNIT --output="$RUNNER_TEMP/maestro-android.xml" --test-output-dir="$RUNNER_TEMP/maestro-android" .maestro/office-workspace.yaml
 
       - name: Upload Android E2E screenshots and report
         if: always()
@@ -219,6 +232,19 @@ jobs:
           MARCIA_E2E_KEEP_DB: "1"
         run: |
           set -euo pipefail
+          mve_setup_token="$(openssl rand -hex 32)"
+          mve_auth_secret="$(openssl rand -hex 32)"
+          mve_password="$(openssl rand -hex 24)"
+          echo "::add-mask::$mve_setup_token"
+          echo "::add-mask::$mve_auth_secret"
+          echo "::add-mask::$mve_password"
+          {
+            echo "MARCIA_E2E_SETUP_TOKEN=$mve_setup_token"
+            echo "MARCIA_E2E_AUTH_SECRET=$mve_auth_secret"
+            echo "MARCIA_E2E_PASSWORD=$mve_password"
+          } >> "$GITHUB_ENV"
+          export MARCIA_E2E_SETUP_TOKEN="$mve_setup_token"
+          export MARCIA_E2E_AUTH_SECRET="$mve_auth_secret"
           nohup node e2e/start-api.mjs > "$RUNNER_TEMP/marcia-api.log" 2>&1 < /dev/null &
           nohup pnpm --filter @marcia/mobile exec expo start --dev-client --host localhost --port 8081 \
             > "$RUNNER_TEMP/marcia-metro.log" 2>&1 < /dev/null &
@@ -253,10 +279,42 @@ jobs:
         run: |
           maestro test --device "$(cat "$RUNNER_TEMP/ios-simulator-udid")" \
             -e APP_ID=com.example.marciaescritorio.demo \
+            -e E2E_PASSWORD="$MARCIA_E2E_PASSWORD" \
+            -e E2E_SETUP_TOKEN="$MARCIA_E2E_SETUP_TOKEN" \
             --format=JUNIT \
             --output="$RUNNER_TEMP/maestro-ios.xml" \
             --test-output-dir="$RUNNER_TEMP/maestro-ios" \
             .maestro/office-workspace.yaml
+
+      - name: Capture iOS screen and runtime diagnostics
+        if: always()
+        run: |
+          simulator_udid="$(cat "$RUNNER_TEMP/ios-simulator-udid")"
+          screenshot="$RUNNER_TEMP/ios-screen.png"
+          xcrun simctl io "$simulator_udid" screenshot "$screenshot" || true
+          if [[ -f "$screenshot" ]]; then
+            cat > "$RUNNER_TEMP/read-screen.swift" <<'SWIFT'
+          import AppKit
+          import Vision
+          let imageURL = URL(fileURLWithPath: CommandLine.arguments[1])
+          guard let image = NSImage(contentsOf: imageURL) else { fatalError("Could not read simulator screenshot") }
+          var rect = CGRect(origin: .zero, size: image.size)
+          guard let cgImage = image.cgImage(forProposedRect: &rect, context: nil, hints: nil) else { fatalError("Could not decode simulator screenshot") }
+          let request = VNRecognizeTextRequest()
+          request.recognitionLevel = .accurate
+          try VNImageRequestHandler(cgImage: cgImage).perform([request])
+          for item in request.results ?? [] {
+            if let text = item.topCandidates(1).first?.string { print("SCREEN TEXT: \(text)") }
+          }
+          SWIFT
+            swift "$RUNNER_TEMP/read-screen.swift" "$screenshot"
+          fi
+          for log_file in "$RUNNER_TEMP/marcia-api.log" "$RUNNER_TEMP/marcia-metro.log"; do
+            if [[ -f "$log_file" ]]; then
+              echo "--- ${log_file##*/} (last 60 lines) ---"
+              tail -n 60 "$log_file"
+            fi
+          done
 
       - name: Upload iOS E2E screenshots and report
         if: always()
@@ -265,6 +323,7 @@ jobs:
           name: ios-native-e2e
           path: |
             ${{ runner.temp }}/maestro-ios.xml
+            ${{ runner.temp }}/ios-screen.png
             ${{ runner.temp }}/maestro-ios/**/*.png
           if-no-files-found: ignore
           retention-days: 7

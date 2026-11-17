@@ -4,7 +4,8 @@ appId: ${APP_ID}
     text: "Wait"
     optional: true
 - extendedWaitUntil:
-    visible: "Bem-vinda"
+    visible:
+      id: "auth-welcome-title"
     timeout: 60000
 - tapOn: "Primeira configuração do escritório"
 - tapOn: "Seu nome"
@@ -12,13 +13,13 @@ appId: ${APP_ID}
 - tapOn: "E-mail"
 - inputText: "marcia-e2e@example.test"
 - tapOn: "Senha"
-- inputText: "SomenteE2ETeste-SemSegredo-2026-!"
+- inputText: "${E2E_PASSWORD}"
 - hideKeyboard
 - swipe:
     start: "90%, 60%"
     end: "90%, 25%"
 - tapOn: "Código de configuração"
-- inputText: "marcia-local-e2e-setup-token-only-no-client-data-v1"
+- inputText: "${E2E_SETUP_TOKEN}"
 - hideKeyboard
 - swipe:
     start: "90%, 75%"
@@ -98,7 +99,13 @@ appId: ${APP_ID}
     end: "90%, 25%"
 - tapOn: "Cadastrar lançamento"
 - assertVisible: "Lançamento confirmado pela API."
+- swipe:
+    start: "90%, 75%"
+    end: "90%, 25%"
 - assertVisible: "Vence em 01/01/2030"
+- swipe:
+    start: "90%, 75%"
+    end: "90%, 30%"
 - tapOn: "Marcar como pago: E2E Android — Despesa fictícia"
 - assertVisible: "Pago"
 - tapOn: "Pesquisa"
