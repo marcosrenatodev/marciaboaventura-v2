@@ -3,6 +3,9 @@ appId: ${APP_ID}
 - tapOn:
     text: "Wait"
     optional: true
+- tapOn:
+    text: "Open"
+    optional: true
 - extendedWaitUntil:
     visible:
       id: "auth-welcome-title"
@@ -107,6 +110,9 @@ appId: ${APP_ID}
     start: "90%, 75%"
     end: "90%, 30%"
 - tapOn: "Marcar como pago: E2E Android — Despesa fictícia"
+- swipe:
+    start: "90%, 30%"
+    end: "90%, 70%"
 - assertVisible: "Pago"
 - tapOn: "Pesquisa"
 - tapOn: "Questão jurídica para pesquisar"
