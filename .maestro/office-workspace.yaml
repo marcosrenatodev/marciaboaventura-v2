@@ -98,7 +98,13 @@ appId: ${APP_ID}
     end: "90%, 25%"
 - tapOn: "Cadastrar lançamento"
 - assertVisible: "Lançamento confirmado pela API."
+- swipe:
+    start: "90%, 75%"
+    end: "90%, 25%"
 - assertVisible: "Vence em 01/01/2030"
+- swipe:
+    start: "90%, 75%"
+    end: "90%, 30%"
 - tapOn: "Marcar como pago: E2E Android — Despesa fictícia"
 - assertVisible: "Pago"
 - tapOn: "Pesquisa"
