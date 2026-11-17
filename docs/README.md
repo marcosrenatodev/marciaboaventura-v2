@@ -8,6 +8,7 @@
 4. [Arquitetura, IA e Cloudflare](plano/03_ARQUITETURA_IA_CLOUDFLARE.md)
 5. [Segurança, CI, testes e operação](plano/04_SEGURANCA_CI_TESTES_OPERACAO.md)
 6. [Modelo de domínio do MVP](plano/05_MODELO_DOMINIO_MVP.md)
+7. [Credenciais e acesso judicial](plano/06_CREDENCIAIS_E_ACESSO_JUDICIAL.md)
 
 ## Decisões arquiteturais
 

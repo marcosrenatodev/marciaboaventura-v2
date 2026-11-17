@@ -94,7 +94,7 @@ Usar pesquisas de tarefa com Márcia para ajustar posição; normas dão um piso
 
 ### Onda 2 — Acompanhamento confiável e assinatura
 
-- Provedor autorizado de andamentos/publicações e DJEN; ingestão durável, dedupe, reprocessamento, reconciliação e painel de saúde.
+- Adapters próprios para fontes oficiais (DataJud, GETs públicos do DJEN e feeds/APIs locais documentados), com ingestão durável, dedupe, reprocessamento, reconciliação e painel de saúde. Validar termos do DataJud e produção do DJEN antes de uso real; contratar provedor somente para lacunas demonstradas de cobertura, atualização, SLA ou licença.
 - Separar na UX os alertas públicos do DJEN, Domicílio Judicial (citações/comunicações pessoais) e andamentos de tribunais/provedores; mostrar fonte, última consulta, cobertura conhecida e atraso. Domicílio só entra após confirmar formalmente elegibilidade e autorização; nenhum aviso confirma ciência ou prazo.
 - Inbox de publicações com classificação sugestiva, evidência e revisão humana; tarefas só após aprovação.
 - Conector de assinatura eletrônica (primeira opção a cotar: Clicksign API v3; manter adapter) e eventos assinados.
