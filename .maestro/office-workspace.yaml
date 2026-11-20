@@ -246,7 +246,7 @@ appId: ${APP_ID}
     element: "Cadastrar processo"
     direction: DOWN
 - tapOn: "Cadastrar processo"
-- assertVisible: "Número do processo: 0000000-04.9999.8.16.0001"
+- assertVisible: "0000000-04.9999.8.16.0001"
 - assertVisible: "Assunto: E2E Example Matter"
 - assertVisible: "Cadastro manual. Nenhum tribunal foi consultado."
 - scrollUntilVisible:

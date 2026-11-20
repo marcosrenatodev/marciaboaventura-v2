@@ -60,6 +60,8 @@ O site institucional atual permanece no root, público e deployado separadamente
 
 ## Estado e próxima ação
 
+> **Design do app integrado em 20/11/2026.** A branch de trabalho incorporou o padrão do `main` em `c3c007f`, incluindo tema, tour e hierarquia das telas. Os roteiros Web e Android já refletem as mudanças de posição e texto. Typecheck de app, API, contratos e E2E e lint do app passaram. A execução renderizada fica para a bateria final. [Checkpoint de integração](ai/CURRENT_STATE.md).
+
 > **Processos e assuntos:** campos e vínculos ficam bloqueados durante salvamento; revisar cliente e validar falha/retry e navegação na etapa final.
 
 > **Agenda — salvamento:** campos e troca de formulário bloqueados durante envio; validar falha/retry e teclado na rodada final.

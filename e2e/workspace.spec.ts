@@ -1101,10 +1101,12 @@ test("configura o escritório, registra processo, tarefa e financeiro e conserva
   expect(todayNewTaskBox!.y).toBeGreaterThanOrEqual(0);
   expect(todayNewTaskBox!.y + todayNewTaskBox!.height).toBeLessThanOrEqual(await page.evaluate(() => window.innerHeight));
   const todayWorkspaceSearch = page.getByRole("textbox", { name: "Buscar clientes, assuntos, processos, tarefas, compromissos ou lançamentos financeiros" });
+  await expect(todayWorkspaceSearch).toBeVisible();
+  const todayQuickActionsBox = await page.getByTestId("today-quick-actions").boundingBox();
   const todayWorkspaceSearchBox = await todayWorkspaceSearch.boundingBox();
+  expect(todayQuickActionsBox).not.toBeNull();
   expect(todayWorkspaceSearchBox).not.toBeNull();
-  expect(todayWorkspaceSearchBox!.y).toBeGreaterThan(todayNewTaskBox!.y);
-  expect(todayWorkspaceSearchBox!.y + todayWorkspaceSearchBox!.height).toBeLessThanOrEqual(await page.evaluate(() => window.innerHeight));
+  expect(todayWorkspaceSearchBox!.y).toBeGreaterThan(todayQuickActionsBox!.y + todayQuickActionsBox!.height);
   await todayNewTask.click();
   await expect(page.getByRole("textbox", { name: "Título da tarefa" })).toBeFocused();
   await openTab(page, "Hoje");
@@ -1535,7 +1537,7 @@ test("configura o escritório, registra processo, tarefa e financeiro e conserva
   await page.getByRole("button", { name: "Cadastrar processo" }).click();
   await expect(page.getByText("Processo cadastrado pela API. Nenhum tribunal foi consultado.")).toBeVisible();
   await expect(page.getByText("Tribunal: Tribunal de Justiça do Paraná").first()).toBeVisible();
-  await expect(page.getByText("Número do processo: 0000000-04.9999.8.16.0001").first()).toBeVisible();
+  await expect(page.getByText("0000000-04.9999.8.16.0001", { exact: true }).first()).toBeVisible();
   await openTab(page, "Hoje");
   await page.getByRole("textbox", { name: "Buscar clientes, assuntos, processos, tarefas, compromissos ou lançamentos financeiros" }).fill(caseLabel);
   await page.getByRole("button", { name: `Abrir processo: ${caseLabel}` }).click();
@@ -2345,7 +2347,9 @@ test("configura o escritório, registra processo, tarefa e financeiro e conserva
   await page.getByLabel("Data de vencimento opcional no formato DD/MM/AAAA").fill(dueDates.yesterday);
   await page.getByRole("button", { name: "Cadastrar lançamento" }).click();
   await expect(page.getByText("Lançamento confirmado pela API.")).toBeVisible();
-  await expect(page.getByText(/Despesa\s+·\s+R\$\s*125,50/).first()).toBeVisible();
+  const initialExpenseRow = page.getByTestId("financial-entry-row").filter({ hasText: expenseTitle });
+  await expect(initialExpenseRow.getByText("Despesa", { exact: true })).toBeVisible();
+  await expect(initialExpenseRow.getByText(/^R\$\s*125,50$/)).toBeVisible();
   await expect(page.getByText(/^Vencida em /).first()).toBeVisible();
   await expect.poll(() => readTotalCents("Total de despesas previstas")).toBe(initialExpenseCents + 12_550);
 
@@ -2409,7 +2413,8 @@ test("configura o escritório, registra processo, tarefa e financeiro e conserva
   await page.getByLabel("Valor em reais e centavos").fill("90071992547409,91");
   await page.getByRole("button", { name: "Cadastrar lançamento" }).click();
   await expect(page.getByText("Lançamento confirmado pela API.")).toBeVisible();
-  await expect(page.getByText(/Receita\s+·\s+R\$\s*90\.071\.992\.547\.409,91/).first()).toBeVisible();
+  await expect(maxAmountRow.getByText("Receita", { exact: true })).toBeVisible();
+  await expect(maxAmountRow.getByText(/^R\$\s*90\.071\.992\.547\.409,91$/)).toBeVisible();
   const maxFinancialListResponse = await request.get(`${E2E_API_BASE_URL}/api/financial-entries`, { headers: { Cookie: cookieHeader } });
   expect(maxFinancialListResponse.status()).toBe(200);
   const maxFinancialList = await maxFinancialListResponse.json() as { items: Array<{ id: string; description: string; amountCents: number; updatedAt: string }> };

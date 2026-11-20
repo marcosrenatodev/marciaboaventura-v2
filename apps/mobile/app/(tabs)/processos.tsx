@@ -227,6 +227,17 @@ export default function MattersScreen() {
       </View>
       {!isClientView && isCaseView && caseMessage ? <Text accessibilityLiveRegion="polite" style={styles.notice}>{caseMessage}</Text> : null}
       {!isClientView && !isCaseView && matterMessage ? <Text accessibilityLiveRegion="polite" style={styles.notice}>{matterMessage}</Text> : null}
+      {!isClientView ? <View style={styles.tight}>
+        <Text style={styles.strong}>{isCaseView ? "Buscar processos" : "Buscar assuntos"}</Text>
+        <AccessibleTextInput accessibilityLabel={isCaseView ? "Buscar processos cadastrados" : "Buscar assuntos cadastrados"} placeholder="Digite para filtrar" placeholderTextColor={colors.muted}
+          value={query} onChangeText={updateQuery} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} autoComplete="off"
+          style={[styles.input, focused && styles.focused]} autoCorrect={false} returnKeyType="search" maxLength={100} />
+        {query ? <ActionButton label={isCaseView ? "Limpar busca de processos" : "Limpar busca de assuntos"} secondary onPress={() => updateQuery("")} /> : null}
+        {isCaseView && query && api.courtCasesNextCursor ? <View style={styles.tight}>
+          <Text accessibilityLiveRegion="polite" style={styles.small}>A busca considera apenas os {api.courtCases.length} processos carregados; há outros registros para consultar.</Text>
+          <ActionButton label={api.courtCasesLoading ? "Ampliando busca…" : "Ampliar busca carregando processos"} secondary disabled={api.courtCasesLoading} onPress={() => void api.loadMoreCourtCases()} />
+        </View> : null}
+      </View> : null}
       {isCaseView && !isCaseFormOpen && (oabSearchOpen || api.sessionInfo?.tenant.role === "owner") ? (
         <ActionButton label={oabSearchOpen ? "Fechar busca por OAB" : "Encontrar processos por OAB"} secondary
           onPress={() => setOabSearchOpen(!oabSearchOpen)} />
@@ -282,18 +293,6 @@ export default function MattersScreen() {
           <ActionButton label="Continuar preenchendo assunto" secondary disabled={saving} onPress={() => setConfirmDiscardMatter(false)} />
         </View> : null}
       </Card></View> : null}
-      {!isClientView && api.sessionInfo?.tenant.role === "owner" ? <ActionButton label="Configurações de integrações" secondary onPress={() => setIntegrationsView(true)} /> : null}
-      {!isClientView ? <View style={styles.tight}>
-        <Text style={styles.strong}>{isCaseView ? "Buscar processos" : "Buscar assuntos"}</Text>
-        <AccessibleTextInput accessibilityLabel={isCaseView ? "Buscar processos cadastrados" : "Buscar assuntos cadastrados"} placeholder="Digite para filtrar" placeholderTextColor={colors.muted}
-          value={query} onChangeText={updateQuery} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} autoComplete="off"
-          style={[styles.input, focused && styles.focused]} autoCorrect={false} returnKeyType="search" maxLength={100} />
-        {query ? <ActionButton label={isCaseView ? "Limpar busca de processos" : "Limpar busca de assuntos"} secondary onPress={() => updateQuery("")} /> : null}
-        {isCaseView && query && api.courtCasesNextCursor ? <View style={styles.tight}>
-          <Text accessibilityLiveRegion="polite" style={styles.small}>A busca considera apenas os {api.courtCases.length} processos carregados; há outros registros para consultar.</Text>
-          <ActionButton label={api.courtCasesLoading ? "Ampliando busca…" : "Ampliar busca carregando processos"} secondary disabled={api.courtCasesLoading} onPress={() => void api.loadMoreCourtCases()} />
-        </View> : null}
-      </View> : null}
       {!isClientView ? <ApiStatus loading={api.loading} issue={api.issue} empty={false} emptyText="" onRetry={() => void api.refresh()} /> : null}
       {isCaseView && api.sessionInfo && !api.loading && !api.issue && filteredCases.length === 0 ? <Card><Heading>Sem processos</Heading><Text style={styles.text}>{query
         ? api.courtCasesNextCursor ? "Nenhum processo correspondente entre os processos carregados. Há mais registros para consultar." : "Nenhum processo corresponde à busca."
@@ -334,12 +333,15 @@ export default function MattersScreen() {
         return <Card key={courtCase.id}>
           <Text style={styles.badge}>{courtCase.status === "archived" ? "Arquivado" : "Ativo"}</Text>
           <Heading>{courtCase.label || courtCase.courtName}</Heading>
+          {courtCase.caseNumber ? <Text accessibilityLabel={`Número do processo: ${courtCase.caseNumber}`} style={styles.strong}>{courtCase.caseNumber}</Text> : null}
           {courtCase.label ? <Text style={styles.text}>Tribunal: {courtCase.courtName}</Text> : null}
           {courtCase.jurisdiction ? <Text style={styles.text}>Estado ou região: {courtCase.jurisdiction}</Text> : null}
-          {courtCase.caseNumber ? <Text style={styles.text}>Número do processo: {courtCase.caseNumber}</Text> : null}
           <Text style={styles.small}>{linkedMatter ? `Assunto: ${linkedMatter.title}` : "Sem assunto vinculado"}</Text>
           <Text style={styles.small}>Cadastro manual. Nenhum tribunal foi consultado.</Text>
           {officialLookupLinks.length ? <CourtCaseLookupShortcuts links={officialLookupLinks} caseAccessibleName={courtCase.label || courtCase.caseNumber || courtCase.courtName} /> : null}
+          <CourtCaseNotesPanel api={api} courtCase={courtCase} />
+          <CourtPublicationsPanel api={api} courtCase={courtCase} />
+          <CourtAlertsPanel courtCase={courtCase} />
           {courtCase.status !== "archived" ? <ActionButton label={`Editar processo: ${courtCase.label || courtCase.courtName}`} secondary onPress={() => {
             if (editingCaseId === courtCase.id) { openCaseForm(); return; }
             if (hasCaseDraft) { setCaseMessage("Há um rascunho de processo. Continue ou descarte-o antes de editar outro."); return; }
@@ -363,9 +365,6 @@ export default function MattersScreen() {
             }} />
             <ActionButton label="Cancelar arquivamento do processo" secondary disabled={statusSaving} onPress={() => setPendingArchive(null)} />
           </View> : null}
-          <CourtCaseNotesPanel api={api} courtCase={courtCase} />
-          <CourtPublicationsPanel api={api} courtCase={courtCase} />
-          <CourtAlertsPanel courtCase={courtCase} />
         </Card>;
       })}
       {isCaseView && api.sessionInfo && api.courtCasesNextCursor ? <Card>
@@ -377,6 +376,7 @@ export default function MattersScreen() {
           secondary disabled={api.courtCasesLoading} onPress={() => void api.loadMoreCourtCases()} />
       </Card> : null}
       {!isClientView && statusMessage ? <Text accessibilityLiveRegion="polite" style={styles.small}>{statusMessage}</Text> : null}
+      {!isClientView && api.sessionInfo?.tenant.role === "owner" ? <ActionButton label="Configurações de integrações" secondary onPress={() => setIntegrationsView(true)} /> : null}
     </Screen>;
   }
   const filtered = matters.filter((matter) => normalizeWorkspaceSearch(`${matter.title} ${matter.label}`).includes(normalizeWorkspaceSearch(query)));

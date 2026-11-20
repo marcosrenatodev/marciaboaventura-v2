@@ -47,12 +47,21 @@ export default function FinanceScreen() {
   const [category, setCategory] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const initialQuickKind = quickAction === "expense" ? "expense" : "income";
-  const [kindSelection, setKindSelection] = useState<{ route: string | undefined; kind: "income" | "expense" }>(() => ({ route: quickAction, kind: initialQuickKind }));
+  const [kindSelection, setKindSelection] = useState<{ route: string | undefined; kind: "income" | "expense"; resumedDraft: boolean }>(
+    () => ({ route: quickAction, kind: initialQuickKind, resumedDraft: false }),
+  );
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [editingEntryVersion, setEditingEntryVersion] = useState<string | null>(null);
   const hasFinancialDraft = Boolean(editingEntryId || description.trim() || amount.trim() || dueOn.trim() || category.trim());
-  const kind = hasFinancialDraft || kindSelection.route === quickAction ? kindSelection.kind : initialQuickKind;
-  const setKind = (value: "income" | "expense") => setKindSelection({ route: quickAction, kind: value });
+  if (kindSelection.route !== quickAction) {
+    setKindSelection({
+      route: quickAction,
+      kind: hasFinancialDraft ? kindSelection.kind : initialQuickKind,
+      resumedDraft: hasQuickAction && hasFinancialDraft,
+    });
+  }
+  const kind = kindSelection.kind;
+  const setKind = (value: "income" | "expense") => setKindSelection((current) => ({ ...current, kind: value }));
   const isFormOpen = formOpen || hasQuickAction;
   const [formNavigationVersion, setFormNavigationVersion] = useState(0);
   const [formIssue, setFormIssue] = useState("");
@@ -62,13 +71,6 @@ export default function FinanceScreen() {
   const [statusSavingEntryId, setStatusSavingEntryId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
-  useEffect(() => {
-    if (!hasQuickAction) return;
-    setKindSelection((current) => ({ route: quickAction, kind: hasFinancialDraft ? current.kind : initialQuickKind }));
-    if (hasFinancialDraft) setNoticeMessage("Você já tem um rascunho financeiro. Confira o tipo antes de salvar ou descarte-o para começar outro.");
-  // Apply the shortcut once when its route changes; edits must not reset the selection.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quickAction]);
   useEffect(() => {
     if (demoMode || !isFormOpen) return;
     const frame = requestAnimationFrame(() => descriptionInput.current?.focus());
@@ -178,6 +180,7 @@ export default function FinanceScreen() {
           secondary={isFormOpen} disabled={saving} onPress={() => isFormOpen ? closeForm() : openForm()} />
       </TourAnchor>}>
       {noticeMessage ? <Text accessibilityLiveRegion="polite" style={styles.notice}>{noticeMessage}</Text> : null}
+      {kindSelection.resumedDraft ? <Text accessibilityLiveRegion="polite" style={styles.notice}>Você já tem um rascunho financeiro. Confira o tipo antes de salvar ou descarte-o para começar outro.</Text> : null}
       <Card>
         <Heading>Valores previstos</Heading>
         {api.loading ? <Text style={styles.small}>Carregando…</Text> : api.sessionInfo && !api.issue ? <View style={styles.stack}>
@@ -190,6 +193,10 @@ export default function FinanceScreen() {
             <Text accessibilityLabel="Total de despesas previstas" style={styles.amount}>{formatMoney(sumCents(expensePlanned))}</Text>
           </View>
         </View> : null}
+        {api.sessionInfo && !api.issue && !api.loading ? (() => {
+          const overdue = api.financialEntries.filter((entry) => entry.status === "planned" && entry.dueOn && entry.dueOn < today).length;
+          return overdue > 0 ? <Text accessibilityLiveRegion="polite" style={styles.badge}>{overdue === 1 ? "1 lançamento vencido" : `${overdue} lançamentos vencidos`} · confira primeiro</Text> : <Text style={styles.small}>Nenhum lançamento vencido.</Text>;
+        })() : null}
         <Text style={styles.small}>Totais excluem lançamentos recebidos, pagos ou cancelados. Sem integração bancária ou conciliação.</Text>
       </Card>
       {entryForm}
@@ -199,9 +206,10 @@ export default function FinanceScreen() {
         {api.loading ? <Text accessibilityLiveRegion="polite" style={styles.small}>Carregando lançamentos…</Text> : null}
         {api.issue ? <View style={styles.tight}><Text accessibilityLiveRegion="assertive" style={styles.text}>{api.issue}</Text><ActionButton label="Tentar novamente" secondary onPress={() => void api.refresh()} /></View> : null}
         {api.sessionInfo && !api.loading && !api.issue && searchedEntries.length === 0 ? <Text style={styles.text}>{searchQuery ? "Nenhum lançamento corresponde à busca." : "Ainda não há lançamentos."}</Text> : null}
-        {api.sessionInfo && !api.issue && searchedEntries.map((entry) => <View key={entry.id} testID="financial-entry-row" style={styles.tight}>
+        {api.sessionInfo && !api.issue && [...searchedEntries].sort((x, y) => (x.status === "planned" ? 0 : 1) - (y.status === "planned" ? 0 : 1) || (x.dueOn ?? "9999").localeCompare(y.dueOn ?? "9999")).map((entry) => <View key={entry.id} testID="financial-entry-row" style={styles.tight}>
           <Text style={styles.strong}>{entry.description}</Text>
-          <Text style={styles.text}>{entry.kind === "expense" ? "Despesa" : "Receita"} · {formatMoney(entry.amountCents)}</Text>
+          <Text style={styles.amount}>{formatMoney(entry.amountCents)}</Text>
+          <Text style={styles.text}>{entry.kind === "expense" ? "Despesa" : "Receita"}</Text>
           {entry.category ? <Text style={styles.small}>Categoria: {entry.category}</Text> : null}
           <Text accessibilityLabel={`Status do lançamento ${entry.description}: ${entry.status === "paid" ? (entry.kind === "income" ? "Recebido" : "Pago") : entry.status === "cancelled" ? "Cancelado" : "Previsto"}`}
             style={styles.small}>{entry.status === "paid" ? (entry.kind === "income" ? "Recebido" : "Pago") : entry.status === "cancelled" ? "Cancelado" : "Previsto"}</Text>

@@ -1,5 +1,7 @@
 # Retomada do projeto Márcia
 
+> **Integração do design em 20/11/2026.** A branch `codex/marcia-mvp-consolidado` incorporou o `origin/main` em `c3c007f`, incluindo tokens de interface, tour com “Experimentar agora” e a ordem das ações em Hoje, Agenda, Financeiro e Processos. O conflito em Processos foi resolvido com a busca no topo e a opção de carregar mais processos junto ao filtro. Os roteiros Web e Android foram ajustados aos textos e posições novos. As jornadas renderizadas ficam para a bateria final.
+
 > Atualizado em 19/11/2026. Este arquivo é um checkpoint curto e durável dentro do repositório; o plano mestre contém o histórico e os detalhes completos.
 
 > **Processos e assuntos — salvamento:** campos, seletor de tribunal/vínculos e fechamento ficam bloqueados durante o envio; troca de coleção é ignorada durante essas gravações. Verificar estados visuais, acessibilidade, erro/retry e troca de aba na bateria final. Cliente ainda precisa de revisão equivalente.
