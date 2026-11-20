@@ -23,5 +23,27 @@
       "migrations_dir": "migrations",
       "remote": false
     }
-  ]
+  ],
+  "r2_buckets": [
+    {
+      "binding": "DOCUMENTS",
+      "bucket_name": "marcia-private-documents-local",
+      "remote": false
+    },
+    {
+      "binding": "BACKUP_DOCUMENTS",
+      "bucket_name": "marcia-private-documents-backup-local",
+      "remote": false
+    }
+  ],
+  "send_email": [
+    { "name": "EMAIL" }
+  ],
+  "vars": {
+    // Local Wrangler simulation only; production requires a verified sender domain and paid plan.
+    "AUTH_EMAIL_FROM": "nao-responda@example.com",
+    "PASSWORD_RESET_ENABLED": "true",
+    // Use "maintenance" to return 503 before any API request reaches D1/R2.
+    "SERVICE_MODE": "normal"
+  }
 }

@@ -2,8 +2,7 @@ name: CI
 
 on:
   pull_request:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -36,6 +35,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Audit dependencies
+        run: pnpm audit:dependencies
+
       - name: Check site
         run: |
           pnpm lint
@@ -47,14 +49,18 @@ jobs:
 
       - name: Check API
         run: |
+          pnpm test:api
           pnpm --filter @marcia/api typecheck
           pnpm --filter @marcia/api build
 
       - name: Check mobile app
         run: |
+          pnpm check:brand-parity
+          pnpm check:mobile-contrast
           pnpm --filter @marcia/mobile typecheck
           pnpm --filter @marcia/mobile lint
           pnpm --filter @marcia/mobile export:web
+          pnpm check:mobile-bundle
 
       - name: Check E2E test types
         run: pnpm typecheck:e2e

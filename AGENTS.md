@@ -2,7 +2,7 @@
 
 ## Project Mission & AI/Human Handoff
 
-This repository is evolving from a public law-office website into a private, mobile-first legal productivity app. Before product or architecture changes, read `docs/PLANO_EXECUCAO_MARCIA.md` and the relevant document linked there. The plan is the canonical source for status, decisions, open questions, research and restart instructions. Update its status and literal next step when a milestone changes.
+This repository is evolving from a public law-office website into a private, mobile-first legal productivity app. After an interruption, read `docs/ai/CURRENT_STATE.md` first; before product or architecture changes, read `docs/PLANO_EXECUCAO_MARCIA.md` and the relevant document linked there. The master plan is canonical for decisions, research and open work; the AI checkpoint is a short navigation aid. Update both when a milestone changes.
 
 - Product north star: make Márcia's frequent legal-office tasks easy, fast, trustworthy and accessible. Validate screen order and language with Márcia.
 - Current website is public marketing only. Do not put private clients, cases, court documents, credentials, finance or production data in the static site/GitHub Pages.

@@ -2,7 +2,7 @@ import { createReadStream, existsSync, statSync } from "node:fs";
 import { createServer } from "node:http";
 import { extname, resolve, sep } from "node:path";
 
-const root = resolve(process.env.MARCIA_E2E_WEB_DIR ?? "apps/mobile/dist");
+const root = resolve(process.env.MARCIA_E2E_WEB_DIR ?? ".local/e2e-web-build");
 const port = Number(process.env.MARCIA_E2E_WEB_PORT ?? 8081);
 const mimeTypes = {
   ".css": "text/css; charset=utf-8",

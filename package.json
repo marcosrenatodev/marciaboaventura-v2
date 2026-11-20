@@ -14,10 +14,19 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:api": "vitest run --config apps/api/vitest.config.ts",
+    "audit:dependencies": "pnpm audit --audit-level=high",
     "test:watch": "vitest",
     "e2e:web:build": "node scripts/e2e-build-web.mjs",
     "e2e:web": "pnpm run e2e:web:build && playwright test",
-    "typecheck:e2e": "tsc --project tsconfig.e2e.json"
+    "e2e:auth": "bash scripts/e2e-auth.sh",
+    "typecheck:e2e": "tsc --project tsconfig.e2e.json",
+    "check:brand-parity": "node scripts/check-brand-parity.mjs",
+    "check:mobile-contrast": "node scripts/check-mobile-contrast.mjs",
+    "check:mobile-bundle": "node scripts/check-mobile-bundle.mjs",
+    "backup:drill": "node scripts/d1-restore-drill.mjs",
+    "usability:session": "node scripts/usability-session.mjs",
+    "datajud:consulta": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/datajud-consulta.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

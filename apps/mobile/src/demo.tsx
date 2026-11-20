@@ -1,4 +1,7 @@
 import { createContext, useContext, useState, type PropsWithChildren } from "react";
+import { formatMoney, sumCents } from "@/money";
+
+export { formatMoney };
 
 // Fabricated from scratch. Never replace with office or ZIP data.
 export const matters = [
@@ -24,8 +27,7 @@ export const financialEntries = [
   { id: "entry-c", title: "Cópias de exemplo", amountCents: 4800, kind: "expense", status: "Pago" },
 ] as const;
 
-export const amountToReceive = financialEntries.filter((entry) => entry.status === "A receber").reduce((sum, entry) => sum + entry.amountCents, 0);
-export const formatMoney = (cents: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
+export const amountToReceive = sumCents(financialEntries.filter((entry) => entry.status === "A receber").map((entry) => entry.amountCents));
 
 type DemoContextValue = {
   tasks: typeof initialTasks;

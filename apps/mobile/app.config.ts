@@ -1,16 +1,21 @@
 import type { ConfigContext, ExpoConfig } from "expo/config";
 
 export default ({ config }: ConfigContext): ExpoConfig => {
-  if (process.env.MARCIA_E2E_LOCAL_HTTP !== "1") return config as ExpoConfig;
+  const plugins = config.plugins ?? [];
+  const configuredPlugins = plugins.some((plugin) => plugin === "expo-sharing" || (Array.isArray(plugin) && plugin[0] === "expo-sharing"))
+    ? plugins
+    : [...plugins, "expo-sharing"];
+  const baseConfig = { ...config, plugins: configuredPlugins };
+  if (process.env.MARCIA_E2E_LOCAL_HTTP !== "1") return baseConfig as ExpoConfig;
 
   return {
-    ...config,
+    ...baseConfig,
     ios: {
-      ...config.ios,
+      ...baseConfig.ios,
       infoPlist: {
-        ...config.ios?.infoPlist,
+        ...baseConfig.ios?.infoPlist,
         NSAppTransportSecurity: {
-          ...(config.ios?.infoPlist?.NSAppTransportSecurity as Record<string, unknown> | undefined),
+          ...(baseConfig.ios?.infoPlist?.NSAppTransportSecurity as Record<string, unknown> | undefined),
           // Local HTTP is permitted only in CI's simulator build. Production uses HTTPS.
           NSAllowsLocalNetworking: true,
         },

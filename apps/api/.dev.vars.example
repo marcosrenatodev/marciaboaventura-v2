@@ -1,6 +1,19 @@
 # Valores fictícios exclusivos para desenvolvimento local. Copie para .dev.vars.
 # Gere segredos aleatórios locais com: openssl rand -base64 32
 AUTH_BASE_URL=http://127.0.0.1:8787
+SERVICE_MODE=normal
 AUTH_SECRET=EXEMPLO_FICTICIO_NAO_USAR_A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6
-WEB_ORIGIN=http://localhost:8081
+WEB_ORIGIN=http://127.0.0.1:8081
 SETUP_OWNER_TOKEN=EXEMPLO_FICTICIO_NAO_USAR_Z9y8X7w6V5u4T3s2R1q0P9o8N7m6L5k4
+# Chave de desenvolvimento independente, 32 bytes em Base64: openssl rand -base64 32
+INTEGRATION_CREDENTIALS_KEY=SUBSTITUA_POR_UMA_CHAVE_ALEATORIA_DE_32_BYTES_BASE64
+DOCUMENTS_ENCRYPTION_KEY=SUBSTITUA_POR_OUTRA_CHAVE_ALEATORIA_DE_32_BYTES_BASE64
+DOCUMENT_BACKUP_ENABLED=false
+INTEGRATION_CREDENTIALS_ENABLED=true
+# OAuth permanece desligado até configurar redirect URIs, rate limit e revisar segurança.
+INTEGRATION_OAUTH_ENABLED=false
+# Consulta DJEN é manual e fica desligada por padrão até validar o contrato da fonte.
+DJEN_ENABLED=false
+DJEN_SCHEMA_VERIFIED=false
+DJEN_OAB_ENABLED=false
+DJEN_ENVIRONMENT=homologation

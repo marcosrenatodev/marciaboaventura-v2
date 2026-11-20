@@ -3,10 +3,12 @@ import { Tabs } from "expo-router";
 import { Text, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme";
+import { GuidedTourOverlay } from "@/GuidedTourOverlay";
 
 const tabs = [
   { name: "index", title: "Hoje", icon: "sunny-outline" },
   { name: "processos", title: "Processos", icon: "folder-open-outline" },
+  { name: "arquivos", title: "Arquivos", icon: "document-text-outline" },
   { name: "agenda", title: "Agenda", icon: "calendar-outline" },
   { name: "financeiro", title: "Financeiro", icon: "wallet-outline" },
   { name: "pesquisa", title: "Pesquisa", icon: "search-outline" },
@@ -17,7 +19,8 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const sidebar = width >= 1000;
   return (
-    <Tabs screenOptions={{
+    <GuidedTourOverlay>
+      <Tabs screenOptions={{
       headerShown: false,
       tabBarPosition: sidebar ? "left" : "bottom",
       tabBarLabelPosition: sidebar ? "beside-icon" : "below-icon",
@@ -38,6 +41,7 @@ export default function TabLayout() {
           tabBarLabel: ({ color, focused }) => <Text style={{ color: color ?? colors.muted, fontSize: 12, fontWeight: focused ? "700" : "500", textAlign: "center" }}>{tab.title}</Text>,
         }} />
       ))}
-    </Tabs>
+      </Tabs>
+    </GuidedTourOverlay>
   );
 }

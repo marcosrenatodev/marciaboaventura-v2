@@ -1,10 +1,17 @@
 name: Native E2E
 
 on:
-  pull_request:
-  push:
-    branches: [main]
   workflow_dispatch:
+    inputs:
+      platform:
+        description: Plataforma a validar
+        type: choice
+        required: true
+        default: android
+        options:
+          - all
+          - android
+          - ios
 
 permissions:
   contents: read
@@ -16,10 +23,12 @@ concurrency:
 jobs:
   android-e2e:
     name: Android emulator · onboarding and office flows
+    if: inputs.platform == 'all' || inputs.platform == 'android'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
       MAESTRO_CLI_NO_ANALYTICS: "true"
+      MARCIA_E2E_DJEN_FIXTURES: "1"
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -52,7 +61,7 @@ jobs:
         run: |
           pnpm --filter @marcia/mobile exec expo prebuild --platform android --no-install
           cd apps/mobile/android
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=x86_64
 
       - name: Install pinned Maestro CLI
         env:
@@ -81,16 +90,20 @@ jobs:
           mve_setup_token="$(openssl rand -hex 32)"
           mve_auth_secret="$(openssl rand -hex 32)"
           mve_password="$(openssl rand -hex 24)"
+          mve_documents_key="$(openssl rand -base64 32)"
           echo "::add-mask::$mve_setup_token"
           echo "::add-mask::$mve_auth_secret"
           echo "::add-mask::$mve_password"
+          echo "::add-mask::$mve_documents_key"
           {
             echo "MARCIA_E2E_SETUP_TOKEN=$mve_setup_token"
             echo "MARCIA_E2E_AUTH_SECRET=$mve_auth_secret"
             echo "MARCIA_E2E_PASSWORD=$mve_password"
+            echo "MARCIA_E2E_DOCUMENTS_KEY=$mve_documents_key"
           } >> "$GITHUB_ENV"
           export MARCIA_E2E_SETUP_TOKEN="$mve_setup_token"
           export MARCIA_E2E_AUTH_SECRET="$mve_auth_secret"
+          export MARCIA_E2E_DOCUMENTS_KEY="$mve_documents_key"
           nohup node e2e/start-api.mjs > "$RUNNER_TEMP/marcia-api.log" 2>&1 < /dev/null &
           nohup pnpm --filter @marcia/mobile exec expo start --dev-client --host localhost --port 8081 \
             > "$RUNNER_TEMP/marcia-metro.log" 2>&1 < /dev/null &
@@ -113,6 +126,12 @@ jobs:
           cat "$RUNNER_TEMP/marcia-metro.log"
           curl --fail --silent --show-error --max-time 2 http://127.0.0.1:8081/status || true
           exit 1
+
+      - name: Seed synthetic document through the authenticated API
+        env:
+          MARCIA_E2E_NAME: Márcia E2E Fictícia
+          MARCIA_E2E_EMAIL: marcia-e2e@example.test
+        run: node e2e/seed-native-document.mjs
 
       - name: Enable KVM for the Android emulator
         run: |
@@ -141,7 +160,7 @@ jobs:
             adb reverse tcp:8787 tcp:8787
             adb shell appops set com.example.marciaescritorio.demo SYSTEM_ALERT_WINDOW allow
             adb shell "am start -a android.intent.action.VIEW -d 'marcia-demo://?__expo_url=http%3A%2F%2F127.0.0.1%3A8081&__expo_disable_onboarding=1&__expo_disable_fab=1&__expo_disable_auto_launch=1'"
-            maestro test --device emulator-5554 -e APP_ID=com.example.marciaescritorio.demo -e E2E_PASSWORD="$MARCIA_E2E_PASSWORD" -e E2E_SETUP_TOKEN="$MARCIA_E2E_SETUP_TOKEN" --format=JUNIT --output="$RUNNER_TEMP/maestro-android.xml" --test-output-dir="$RUNNER_TEMP/maestro-android" .maestro/office-workspace.yaml
+            maestro test --device emulator-5554 -e APP_ID=com.example.marciaescritorio.demo -e E2E_PASSWORD="$MARCIA_E2E_PASSWORD" --format=JUNIT --output="$RUNNER_TEMP/maestro-android.xml" --test-output-dir="$RUNNER_TEMP/maestro-android" .maestro/office-workspace.yaml
 
       - name: Upload Android E2E screenshots and report
         if: always()
@@ -156,11 +175,13 @@ jobs:
 
   ios-e2e:
     name: iOS simulator · office journey
+    if: inputs.platform == 'all' || inputs.platform == 'ios'
     runs-on: macos-26
     timeout-minutes: 45
     env:
       MAESTRO_CLI_NO_ANALYTICS: "true"
       MARCIA_E2E_LOCAL_HTTP: "1"
+      MARCIA_E2E_DJEN_FIXTURES: "1"
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -235,16 +256,20 @@ jobs:
           mve_setup_token="$(openssl rand -hex 32)"
           mve_auth_secret="$(openssl rand -hex 32)"
           mve_password="$(openssl rand -hex 24)"
+          mve_documents_key="$(openssl rand -base64 32)"
           echo "::add-mask::$mve_setup_token"
           echo "::add-mask::$mve_auth_secret"
           echo "::add-mask::$mve_password"
+          echo "::add-mask::$mve_documents_key"
           {
             echo "MARCIA_E2E_SETUP_TOKEN=$mve_setup_token"
             echo "MARCIA_E2E_AUTH_SECRET=$mve_auth_secret"
             echo "MARCIA_E2E_PASSWORD=$mve_password"
+            echo "MARCIA_E2E_DOCUMENTS_KEY=$mve_documents_key"
           } >> "$GITHUB_ENV"
           export MARCIA_E2E_SETUP_TOKEN="$mve_setup_token"
           export MARCIA_E2E_AUTH_SECRET="$mve_auth_secret"
+          export MARCIA_E2E_DOCUMENTS_KEY="$mve_documents_key"
           nohup node e2e/start-api.mjs > "$RUNNER_TEMP/marcia-api.log" 2>&1 < /dev/null &
           nohup pnpm --filter @marcia/mobile exec expo start --dev-client --host localhost --port 8081 \
             > "$RUNNER_TEMP/marcia-metro.log" 2>&1 < /dev/null &
@@ -268,6 +293,18 @@ jobs:
           curl --fail --silent --show-error --max-time 2 http://127.0.0.1:8081/status || true
           exit 1
 
+      - name: Seed synthetic document through the authenticated API
+        env:
+          MARCIA_E2E_NAME: Márcia E2E Fictícia
+          MARCIA_E2E_EMAIL: marcia-e2e@example.test
+        run: node e2e/seed-native-document.mjs
+
+      - name: Prebundle iOS JavaScript before simulator launch
+        run: |
+          curl --fail --location --silent --show-error --max-time 300 --output /dev/null \
+            "http://127.0.0.1:8081/index.bundle?platform=ios&dev=true&minify=false"
+          echo "iOS JavaScript bundle is ready before opening the app"
+
       - name: Launch app bundle in the simulator
         run: |
           simulator_udid="$(cat "$RUNNER_TEMP/ios-simulator-udid")"
@@ -280,7 +317,6 @@ jobs:
           maestro test --device "$(cat "$RUNNER_TEMP/ios-simulator-udid")" \
             -e APP_ID=com.example.marciaescritorio.demo \
             -e E2E_PASSWORD="$MARCIA_E2E_PASSWORD" \
-            -e E2E_SETUP_TOKEN="$MARCIA_E2E_SETUP_TOKEN" \
             --format=JUNIT \
             --output="$RUNNER_TEMP/maestro-ios.xml" \
             --test-output-dir="$RUNNER_TEMP/maestro-ios" \
