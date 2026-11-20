@@ -247,15 +247,15 @@ export default function AgendaScreen() {
     <Heading>{editingTaskId ? "Editar tarefa" : "Nova tarefa"}</Heading>
     <Text style={styles.small}>Organize um próximo passo; esta data não confirma prazo processual.</Text>
     <AccessibleTextInput testID="agenda-task-title-input" ref={taskTitleInput} accessibilityLabel="Título da tarefa" placeholder="Ex.: Separar documentos" placeholderTextColor={colors.muted}
-      value={title} onChangeText={(value) => { setTitle(value); setTaskFormMessage(""); }} maxLength={160} style={styles.input} />
+      value={title} onChangeText={(value) => { setTitle(value); setTaskFormMessage(""); }} editable={!saving} maxLength={160} style={styles.input} />
     <AccessibleTextInput testID="agenda-task-date-input" accessibilityLabel="Data da tarefa (DD/MM/AAAA, opcional)" placeholder="Data para organizar · DD/MM/AAAA (opcional)" placeholderTextColor={colors.muted}
-      value={taskDate} onChangeText={(value) => { setTaskDate(formatDateInputDraft(value)); setTaskFormMessage(""); }} keyboardType="numbers-and-punctuation" maxLength={10} style={styles.input} />
+      value={taskDate} onChangeText={(value) => { setTaskDate(formatDateInputDraft(value)); setTaskFormMessage(""); }} editable={!saving} keyboardType="numbers-and-punctuation" maxLength={10} style={styles.input} />
     <View style={styles.tight}>
       <Text style={styles.strong}>Assunto relacionado (opcional)</Text>
-      <ActionButton label={selectedTaskMatterId ? "Remover vínculo com assunto" : "Sem assunto vinculado"} secondary onPress={() => setSelectedTaskMatterId(null)} />
+      <ActionButton label={selectedTaskMatterId ? "Remover vínculo com assunto" : "Sem assunto vinculado"} secondary disabled={saving} onPress={() => setSelectedTaskMatterId(null)} />
       {taskMatterOptions.map((matter) => <ActionButton key={matter.id}
         label={selectedTaskMatterId === matter.id ? `Selecionado: ${matter.title}` : `Selecionar assunto: ${matter.title}`}
-        secondary onPress={() => setSelectedTaskMatterId(matter.id)} />)}
+        secondary disabled={saving} onPress={() => setSelectedTaskMatterId(matter.id)} />)}
       {api.matters.filter((matter) => matter.status !== "archived").length === 0 && !api.loading ? <Text style={styles.small}>Cadastre um assunto em Processos para organizar a tarefa por pasta.</Text> : null}
     </View>
     {taskFormMessage ? <Text accessibilityLiveRegion="assertive" style={styles.error}>{taskFormMessage}</Text> : null}
@@ -274,17 +274,17 @@ export default function AgendaScreen() {
     <Heading>{editingAppointmentId ? "Editar compromisso" : "Novo compromisso"}</Heading>
     <Text style={styles.small}>Audiências e reuniões são lembretes de trabalho. Confira qualquer prazo no canal oficial.</Text>
     <AccessibleTextInput testID="agenda-appointment-title-input" ref={appointmentTitleInput} accessibilityLabel="Título do compromisso" placeholder="Ex.: Reunião de preparação" placeholderTextColor={colors.muted}
-      value={appointmentTitle} onChangeText={(value) => { setAppointmentTitle(value); setAppointmentFormMessage(""); }} maxLength={160} style={styles.input} />
+      value={appointmentTitle} onChangeText={(value) => { setAppointmentTitle(value); setAppointmentFormMessage(""); }} editable={!savingAppointment} maxLength={160} style={styles.input} />
     <AccessibleTextInput testID="agenda-appointment-date-input" accessibilityLabel="Data do compromisso (DD/MM/AAAA)" placeholder="DD/MM/AAAA" placeholderTextColor={colors.muted}
-      value={appointmentDate} onChangeText={(value) => { setAppointmentDate(formatDateInputDraft(value)); setAppointmentFormMessage(""); }} keyboardType="numbers-and-punctuation" maxLength={10} style={styles.input} />
+      value={appointmentDate} onChangeText={(value) => { setAppointmentDate(formatDateInputDraft(value)); setAppointmentFormMessage(""); }} editable={!savingAppointment} keyboardType="numbers-and-punctuation" maxLength={10} style={styles.input} />
     <View style={styles.columns}>
       <AccessibleTextInput testID="agenda-appointment-start-input" accessibilityLabel="Horário de início (HH:MM)" placeholder="Início · HH:MM" placeholderTextColor={colors.muted}
-        value={startsAt} onChangeText={(value) => { setStartsAt(value); setAppointmentFormMessage(""); }} keyboardType="numbers-and-punctuation" maxLength={5} style={[styles.input, styles.flexible]} />
+        value={startsAt} onChangeText={(value) => { setStartsAt(value); setAppointmentFormMessage(""); }} editable={!savingAppointment} keyboardType="numbers-and-punctuation" maxLength={5} style={[styles.input, styles.flexible]} />
       <AccessibleTextInput testID="agenda-appointment-end-input" accessibilityLabel="Horário de término (HH:MM)" placeholder="Término · HH:MM" placeholderTextColor={colors.muted}
-        value={endsAt} onChangeText={(value) => { setEndsAt(value); setAppointmentFormMessage(""); }} keyboardType="numbers-and-punctuation" maxLength={5} style={[styles.input, styles.flexible]} />
+        value={endsAt} onChangeText={(value) => { setEndsAt(value); setAppointmentFormMessage(""); }} editable={!savingAppointment} keyboardType="numbers-and-punctuation" maxLength={5} style={[styles.input, styles.flexible]} />
     </View>
     <AccessibleTextInput accessibilityLabel="Local do compromisso (opcional)" placeholder="Local ou link (opcional)" placeholderTextColor={colors.muted}
-      value={location} onChangeText={(value) => { setLocation(value); setAppointmentFormMessage(""); }} maxLength={500} style={styles.input} />
+      value={location} onChangeText={(value) => { setLocation(value); setAppointmentFormMessage(""); }} editable={!savingAppointment} maxLength={500} style={styles.input} />
     <Text style={styles.small}>Horários no fuso {appointmentTimeZone}. Horários ambíguos ou inexistentes por mudança de relógio são recusados para evitar deslocamentos silenciosos.</Text>
     {appointmentFormMessage ? <Text accessibilityLiveRegion="assertive" style={styles.error}>{appointmentFormMessage}</Text> : null}
     <ActionButton label={savingAppointment ? "Salvando compromisso…" : editingAppointmentId ? "Salvar alterações do compromisso" : "Cadastrar compromisso"} disabled={savingAppointment} onPress={saveAppointment} />
@@ -304,16 +304,16 @@ export default function AgendaScreen() {
       ? <TourAnchor id="agenda.new-entry"><ActionButton
         testID="agenda-new-entry" label={isTaskFormOpen ? "Fechar formulário de tarefa" : editingTaskId ? "Continuar edição da tarefa" : hasTaskDraft ? "Continuar tarefa" : "Nova tarefa"}
         accessibilityHint={isTaskFormOpen ? "Fecha o formulário mantendo o rascunho para continuar depois." : "Abre o formulário para organizar um próximo passo."}
-        secondary={isTaskFormOpen} onPress={() => isTaskFormOpen ? closeTaskForm() : openTaskForm()} /></TourAnchor>
+        secondary={isTaskFormOpen} disabled={saving || savingAppointment} onPress={() => isTaskFormOpen ? closeTaskForm() : openTaskForm()} /></TourAnchor>
       : <TourAnchor id="agenda.new-entry"><ActionButton
         testID="agenda-new-entry" label={isAppointmentFormOpen ? "Fechar formulário de compromisso" : editingAppointmentId ? "Continuar edição do compromisso" : hasAppointmentDraft ? "Continuar compromisso" : "Novo compromisso"}
         accessibilityHint={isAppointmentFormOpen ? "Fecha o formulário mantendo o rascunho para continuar depois." : "Abre o formulário para anotar uma audiência ou reunião."}
-        secondary={isAppointmentFormOpen} onPress={() => isAppointmentFormOpen ? closeAppointmentForm() : openAppointmentForm()} /></TourAnchor>}>
+        secondary={isAppointmentFormOpen} disabled={saving || savingAppointment} onPress={() => isAppointmentFormOpen ? closeAppointmentForm() : openAppointmentForm()} /></TourAnchor>}>
     {searchQuery ? <Card><Text style={styles.eyebrow}>BUSCA DO ESCRITÓRIO</Text><Text style={styles.strong}>Resultados para “{searchQuery}”</Text><Text style={styles.small}>A lista de compromissos e tarefas está filtrada. O calendário continua mostrando todos os itens.</Text><ActionButton label="Limpar busca da agenda" secondary onPress={() => searchNavigation.setSearchQuery("agenda", "")} /></Card> : null}
     {currentView === "calendar" ? appointmentForm : null}
     {!isAppointmentFormOpen ? <View style={width < 480 ? styles.stack : styles.columns}>
-      <ActionButton testID="agenda-view-calendar" label={currentView === "calendar" ? "Agenda selecionada" : "Agenda"} secondary={currentView !== "calendar"} onPress={() => switchView("calendar")} />
-      <ActionButton testID="agenda-view-tasks" label={currentView === "tasks" ? "Tarefas selecionadas" : "Tarefas"} secondary={currentView !== "tasks"} onPress={() => switchView("tasks")} />
+      <ActionButton testID="agenda-view-calendar" label={currentView === "calendar" ? "Agenda selecionada" : "Agenda"} secondary={currentView !== "calendar"} disabled={saving || savingAppointment} onPress={() => switchView("calendar")} />
+      <ActionButton testID="agenda-view-tasks" label={currentView === "tasks" ? "Tarefas selecionadas" : "Tarefas"} secondary={currentView !== "tasks"} disabled={saving || savingAppointment} onPress={() => switchView("tasks")} />
     </View> : null}
     {noticeMessage ? <Text accessibilityLiveRegion="polite" style={styles.notice}>{noticeMessage}</Text> : null}
     <View style={currentView === "calendar" && !isAppointmentFormOpen ? undefined : { display: "none" }}>
@@ -334,7 +334,7 @@ export default function AgendaScreen() {
             style={styles.badge}>{appointment.status === "cancelled" ? "Cancelado" : "Agendado · lembrete de trabalho"}</Text>
           <Text style={styles.small}>Lembrete de trabalho · não é prazo processual confirmado.</Text>
           {appointmentRowMessages[appointment.id] ? <Text accessibilityLiveRegion="polite" style={styles.small}>{appointmentRowMessages[appointment.id]}</Text> : null}
-          {appointment.status === "scheduled" ? <ActionButton label={`Editar compromisso: ${appointment.title}`} secondary onPress={() => {
+          {appointment.status === "scheduled" ? <ActionButton label={`Editar compromisso: ${appointment.title}`} secondary disabled={saving || savingAppointment} onPress={() => {
             if (editingAppointmentId === appointment.id) { openAppointmentForm(); return; }
             if (hasAppointmentDraft) { setNoticeMessage("Há um rascunho de compromisso. Continue ou descarte-o antes de editar outro."); return; }
             try {
@@ -377,14 +377,14 @@ export default function AgendaScreen() {
             <Text accessibilityLabel={`Status da tarefa ${task.title}: ${taskStatusLabel}`} style={styles.small}>{taskStatusLabel}</Text>
             <Text style={styles.small}>{task.scheduledOn ? `Organizada para ${isoDateToInput(task.scheduledOn)}` : "Sem data de organização"} · lembrete de trabalho, não prazo judicial.</Text>
             {taskRowMessages[task.id] ? <Text accessibilityLiveRegion="polite" style={styles.small}>{taskRowMessages[task.id]}</Text> : null}
-            {task.status === "todo" || task.status === "in_progress" ? <ActionButton label={`Editar tarefa: ${task.title}`} secondary onPress={() => {
+            {task.status === "todo" || task.status === "in_progress" ? <ActionButton label={`Editar tarefa: ${task.title}`} secondary disabled={saving || savingAppointment} onPress={() => {
               if (editingTaskId === task.id) { openTaskForm(); return; }
               if (hasTaskDraft) { setNoticeMessage("Há um rascunho de tarefa. Continue ou descarte-o antes de editar outra."); return; }
               setEditingTaskId(task.id); setEditingTaskVersion(task.updatedAt); setTitle(task.title);
               setTaskDate(task.scheduledOn ? isoDateToInput(task.scheduledOn) : ""); setSelectedTaskMatterId(task.matterId ?? null); setTaskFormMessage("");
               openTaskForm();
             }} /> : null}
-            {task.status !== "cancelled" ? <ActionButton label={task.status === "done" ? `Reabrir tarefa: ${task.title}` : `Concluir tarefa: ${task.title}`} secondary disabled={Boolean(taskStatusSavingId)} onPress={() => {
+            {task.status !== "cancelled" ? <ActionButton label={task.status === "done" ? `Reabrir tarefa: ${task.title}` : `Concluir tarefa: ${task.title}`} secondary disabled={saving || savingAppointment || Boolean(taskStatusSavingId)} onPress={() => {
               changeTaskStatus(task.id, task.status === "done" ? "todo" : "done", task.updatedAt);
             }} /> : null}
             <View style={styles.divider} />

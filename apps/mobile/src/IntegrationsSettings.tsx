@@ -114,7 +114,7 @@ export function IntegrationsSettings({ onBack }: { onBack: () => void }) {
       setMessage(provider === "google_drive"
         ? result.providerRevocation === "confirmed"
           ? "A conta foi desconectada e o token de atualização foi revogado no Google."
-          : "A conta foi desconectada deste app, mas o Google não confirmou a revogação remota. Revise também os apps conectados na sua Conta Google."
+          : "A conta foi desconectada deste app. Para remover a autorização no Google, revise os apps conectados na sua Conta Google."
         : "A conta foi desconectada deste app. Para revogar o consentimento Microsoft, revise os aplicativos autorizados na conta ou peça ajuda ao administrador do Microsoft 365.");
       setMessageProvider(provider);
       await load();
@@ -182,6 +182,11 @@ export function IntegrationsSettings({ onBack }: { onBack: () => void }) {
         }} disabled={saving || (googleClearSecret && Boolean(googleClientSecret))} />
         {message && messageProvider === "google_drive" ? <Text testID="integration-google-save-status" accessibilityLiveRegion="polite" style={styles.notice}>{message}</Text> : null}
         {settings.googleDrive.connectionStatus === "connected" ? <>
+          {settings.googleDrive.refreshState === "pending" ? <Text accessibilityLiveRegion="polite" style={styles.small}>Atualização da conexão em andamento. Aguarde e atualize esta tela.</Text> : null}
+          {settings.googleDrive.refreshState === "uncertain" ? <View style={styles.tight}>
+            <Text accessibilityLiveRegion="assertive" style={styles.error}>Não foi possível confirmar a renovação. Reconecte a conta para continuar.</Text>
+            <ActionButton label="Reconectar Google Drive" secondary disabled={saving || !settings.oauthEnabled} onPress={() => void connect("google_drive")} />
+          </View> : null}
           <Text style={styles.small}>Permissões concedidas: {settings.googleDrive.grantedScopes.join(", ") || "não informadas"}.</Text>
           {pendingDisconnect === "google_drive" ? <View style={styles.tight}>
             <Text style={styles.text}>Desconectar remove os tokens cifrados do app. O consentimento também pode precisar ser revogado na Conta Google. Confirma?</Text>
@@ -223,6 +228,11 @@ export function IntegrationsSettings({ onBack }: { onBack: () => void }) {
         }} disabled={saving || (microsoftClearSecret && Boolean(microsoftClientSecret))} />
         {message && messageProvider === "microsoft_graph" ? <Text testID="integration-microsoft-save-status" accessibilityLiveRegion="polite" style={styles.notice}>{message}</Text> : null}
         {settings.microsoftGraph.connectionStatus === "connected" ? <>
+          {settings.microsoftGraph.refreshState === "pending" ? <Text accessibilityLiveRegion="polite" style={styles.small}>Atualização da conexão em andamento. Aguarde e atualize esta tela.</Text> : null}
+          {settings.microsoftGraph.refreshState === "uncertain" ? <View style={styles.tight}>
+            <Text accessibilityLiveRegion="assertive" style={styles.error}>Não foi possível confirmar a renovação. Reconecte a conta para continuar.</Text>
+            <ActionButton label="Reconectar Microsoft OneDrive" secondary disabled={saving || !settings.oauthEnabled} onPress={() => void connect("microsoft_graph")} />
+          </View> : null}
           <Text style={styles.small}>Permissões concedidas: {settings.microsoftGraph.grantedScopes.join(", ") || "não informadas"}.</Text>
           {pendingDisconnect === "microsoft_graph" ? <View style={styles.tight}>
             <Text style={styles.text}>Desconectar remove os tokens deste app. O consentimento precisa ser revogado nas configurações da conta ou com o administrador do Microsoft 365. Confirma?</Text>

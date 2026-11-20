@@ -5,6 +5,7 @@ import { Platform, Pressable, Text, View } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
+import { useFocusEffect } from "expo-router";
 import { openGooglePdfPicker } from "@/google-picker";
 import { ActionButton, Card, Heading, Screen } from "@/components/Ui";
 import { useAuth } from "@/auth";
@@ -48,6 +49,7 @@ export default function DocumentsScreen() {
   const [issue, setIssue] = useState("");
   const [message, setMessage] = useState("");
   const [integrationState, setIntegrationState] = useState<{ tenantId: string; value: Awaited<ReturnType<typeof api.loadIntegrationSettings>> } | null>(null);
+  const integrationRequestVersion = useRef(0);
   const integrationSettings = integrationState?.tenantId === sessionTenantId ? integrationState.value : null;
   const [integrationIssueTenantId, setIntegrationIssueTenantId] = useState<string | null>(null);
   const integrationsLoaded = Boolean(sessionTenantId && (
@@ -96,32 +98,38 @@ export default function DocumentsScreen() {
 
   useEffect(() => { void Promise.resolve().then(load); }, [load]);
 
-  useEffect(() => {
-    let active = true;
+  useFocusEffect(useCallback(() => {
     if (demoMode || !session || !sessionTenantId) return;
+    const requestVersion = ++integrationRequestVersion.current;
+    setIntegrationState(null);
+    setIntegrationIssueTenantId(null);
     loadIntegrationSettings().then((value) => {
-      if (active) {
+      if (integrationRequestVersion.current === requestVersion) {
         setIntegrationState({ tenantId: sessionTenantId, value });
         setIntegrationIssueTenantId(null);
       }
     }).catch(() => {
-      if (active) {
+      if (integrationRequestVersion.current === requestVersion) {
         setIntegrationState(null);
         setIntegrationIssueTenantId(sessionTenantId);
       }
     });
-    return () => { active = false; };
-  }, [loadIntegrationSettings, demoMode, session, sessionTenantId]);
+    return () => { integrationRequestVersion.current += 1; };
+  }, [loadIntegrationSettings, demoMode, session, sessionTenantId]));
 
   const retryIntegrationSettings = async () => {
     if (!session || !sessionTenantId) return;
+    const requestVersion = ++integrationRequestVersion.current;
+    setIntegrationState(null);
     setIntegrationIssueTenantId(null);
     try {
       const value = await loadIntegrationSettings();
-      setIntegrationState({ tenantId: sessionTenantId, value });
+      if (integrationRequestVersion.current === requestVersion) setIntegrationState({ tenantId: sessionTenantId, value });
     } catch {
-      setIntegrationState(null);
-      setIntegrationIssueTenantId(sessionTenantId);
+      if (integrationRequestVersion.current === requestVersion) {
+        setIntegrationState(null);
+        setIntegrationIssueTenantId(sessionTenantId);
+      }
     }
   };
 
@@ -354,16 +362,20 @@ export default function DocumentsScreen() {
       <Heading>Google Drive</Heading>
       <Text style={styles.small}>O Google Drive original não será alterado.</Text>
       {integrationLoadFailed ? null : !integrationsLoaded ? <Text style={styles.small}>Verificando a conexão com o Google Drive…</Text>
+        : integrationSettings?.googleDrive.refreshState === "uncertain" ? <Text accessibilityLiveRegion="polite" style={styles.small}>A conexão precisa ser reconectada em Processos → Configurações de integrações.</Text>
+        : integrationSettings?.googleDrive.refreshState === "pending" ? <View style={styles.tight}><Text style={styles.small}>Atualização da conexão em andamento.</Text><ActionButton label="Atualizar status do Google Drive" secondary onPress={() => void retryIntegrationSettings()} /></View>
         : integrationSettings?.googleDrive.connectionStatus === "connected" ? Platform.OS === "web"
           ? <ActionButton label="Escolher PDF no Google Drive" onPress={() => void selectFromGoogleDrive()} disabled={Boolean(selectedFile) || Boolean(selectedDriveFile) || Boolean(driveImportingId)} />
           : <Text style={styles.small}>No celular, use “Escolher PDF do dispositivo”: se o Google Drive estiver disponível no seletor de arquivos do aparelho, você pode escolher o PDF por lá.</Text>
-        : <Text style={styles.small}>Google Drive ainda não conectado. Configure em Conta → Integrações.</Text>}
+        : <Text style={styles.small}>Google Drive ainda não conectado. Configure em Processos → Configurações de integrações.</Text>}
     </Card>
 
     <Card>
       <Heading>Microsoft OneDrive</Heading>
       <Text style={styles.small}>Apenas leitura: a importação cria uma cópia privada do PDF.</Text>
       {integrationLoadFailed ? null : !integrationsLoaded ? <Text style={styles.small}>Verificando a conexão com o OneDrive…</Text>
+        : integrationSettings?.microsoftGraph.refreshState === "uncertain" ? <Text accessibilityLiveRegion="polite" style={styles.small}>A conexão precisa ser reconectada em Processos → Configurações de integrações.</Text>
+        : integrationSettings?.microsoftGraph.refreshState === "pending" ? <View style={styles.tight}><Text style={styles.small}>Atualização da conexão em andamento.</Text><ActionButton label="Atualizar status do OneDrive" secondary onPress={() => void retryIntegrationSettings()} /></View>
         : integrationSettings?.microsoftGraph.connectionStatus === "connected" ? <>
           <ActionButton label={driveLoading ? "Abrindo OneDrive…" : driveActive ? "Atualizar arquivos do OneDrive" : "Abrir arquivos do OneDrive"}
             secondary onPress={() => void loadDriveFolder(driveActive ? driveFolderStack.at(-1)?.id ?? null : null)}
@@ -396,7 +408,7 @@ export default function DocumentsScreen() {
             {drivePageToken ? <ActionButton label={driveLoading ? "Carregando…" : "Carregar mais arquivos"} secondary
               onPress={() => void loadDriveFolder(driveFolderStack.at(-1)?.id ?? null, drivePageToken, true)} disabled={driveLoading} /> : null}
           </View> : null}
-        </> : <Text style={styles.small}>Microsoft OneDrive ainda não conectado. Configure em Conta → Integrações.</Text>}
+        </> : <Text style={styles.small}>Microsoft OneDrive ainda não conectado. Configure em Processos → Configurações de integrações.</Text>}
     </Card>
 
     {integrationLoadFailed ? <Card testID="documents-integration-issue">

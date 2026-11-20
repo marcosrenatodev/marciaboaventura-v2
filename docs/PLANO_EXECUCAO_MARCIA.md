@@ -60,6 +60,70 @@ O site institucional atual permanece no root, público e deployado separadamente
 
 ## Estado e próxima ação
 
+> **Processos e assuntos:** campos e vínculos ficam bloqueados durante salvamento; revisar cliente e validar falha/retry e navegação na etapa final.
+
+> **Agenda — salvamento:** campos e troca de formulário bloqueados durante envio; validar falha/retry e teclado na rodada final.
+
+> **Financeiro — salvamento:** campos e troca de formulário bloqueados durante gravação; validar recuperação em falha e comportamento de teclado na rodada final.
+
+> **Busca em processos:** a limitação aos itens carregados e a ação para ampliar a busca aparecem junto ao filtro quando há mais páginas. Validar com lista longa na rodada final.
+
+> **Publicações — cursor:** âncora deve existir no processo e escritório autenticados; testar rejeição cruzada e registros ausentes na rodada final.
+
+> **Publicações — retorno à primeira página:** a ficha avisa quando atualização ou recuperação de conflito reinicia uma lista já paginada. Validar com mais de 100 itens e falhas na rodada final.
+
+> **Paginação DJEN:** migration 0032 acrescenta índice para o cursor; interface indica quantidade carregada e orienta recuperar cursor inválido. Validar índice, limites e erros na rodada final.
+
+> **Histórico DJEN:** paginação por cursor implementada para publicações salvas, com botão de carregar mais e deduplicação no app. Validar estabilidade, isolamento e limites na bateria final; não confundir com paginação da fonte oficial.
+
+> **Publicações salvas:** a tela avisa quando o limite de 100 oculta registros; paginação para acessar o restante no app ainda precisa ser implementada. Validar 100/101 e desempate na rodada final.
+
+> **DJEN — orientação de colisão:** conflito de identificador entre ambientes tem resposta específica quando o D1 propaga o erro da trigger; validar propagação e rollback na rodada final, antes de habilitar a fonte.
+
+> **DJEN — ambientes:** cada publicação mostra produção ou homologação; migration 0031 impede que hash igual mova histórico entre ambientes. Armazenamento simultâneo de colisões e orientação específica ainda são pendências; validar migrations e colisão antes de ativar.
+
+> **CNJ — defesa no D1:** migration 0030 bloqueia no banco mudança de identidade quando há histórico DJEN. Validar cadeia, compatibilidade com registros existentes e concorrência antes de liberar a fonte.
+
+> **DJEN — retorno de corrida:** alteração de identidade ou arquivamento detectados após consulta recebem aviso específico de resultado não salvo; testar concorrência e indisponibilidade D1 na rodada final.
+
+> **CNJ — orientação de bloqueio:** a API distingue histórico DJEN de alteração concorrente e o app orienta criar outro cadastro sem apagar o histórico. Validar erros e concorrência na E2E final antes de ligar a fonte.
+
+> **P0 CNJ — implementação inicial:** a gravação DJEN exige identidade e estado ativo ainda iguais aos consultados; edição de identidade é bloqueada com histórico DJEN. Falta mensagem específica e validar corridas/dados existentes; gate permanece desligado.
+
+> **P0 — identidade CNJ e histórico:** o vínculo DJEN usa `case_id` enquanto `case_number` é editável, inclusive durante consulta em voo. Implementar proteção transacional que mantenha cada publicação ligada à identidade consultada, preserve histórico e trate concorrência antes de ativar o DJEN. Ver checkpoint; não há correção implementada ainda.
+
+> **DJEN — falhas de rede:** a ficha alerta sobre dados possivelmente desatualizados e tenta recarregar o último estado salvo após falha; mantém a visualização anterior caso a releitura falhe. Validar cenários na E2E final sintética.
+
+> **DJEN — falha na ficha:** mensagens diferenciam itens, vazio, limite e indisponibilidade, preservando histórico e orientando conferência oficial. Validar estados sintéticos na rodada final.
+
+> **DJEN — mudança entre páginas:** busca por OAB agora sinaliza variação de contagem e recusa avanço fora de sequência. Validar com fixtures na etapa final; cobertura e ordenação continuam não confirmadas.
+
+> **DJEN por OAB:** aviso de cobertura não confirmada e indicação de páginas restantes foram adicionados à interface; validar estados renderizados na etapa final. Isso não comprova cobertura da fonte nem habilita a integração.
+
+> **Arquivos — consultas concorrentes:** uma sequência invalida respostas anteriores ao refocar ou repetir a consulta dos Drives; validar atrasos fora de ordem e troca de tenant na rodada final.
+
+> **Arquivos — atualização ao voltar:** estado dos Drives é consultado ao focar a aba, sem exibir conexão antiga durante a leitura; validar retorno e preservação de rascunho na rodada final.
+
+> **Arquivos — estado dos Drives:** a escolha de origem apresenta renovação pendente/incerta e o caminho correto para configurações em Processos; validar transições e rascunhos na E2E final.
+
+> **Drive — recuperação visível:** a tela de integrações mostra guarda de renovação pendente/incerta e oferece reconexão. Exige validação final de contrato, segurança e concorrência antes de ativar OAuth real.
+
+> **E2E final:** atualizados os passos de desconexão Google e confirmação de descarte financeiro; não executados nesta etapa. Complementar cenários de concorrência OAuth e rascunhos antes de executar a bateria.
+
+> **Desconexão Google:** a conexão local é removida, e a pessoa é orientada a revogar a autorização na Conta Google. Revogação automática está suspensa enquanto se resolve a corrida com reconexão; atualizar E2E e reavaliar o comportamento antes de ativar OAuth real.
+
+> **OAuth — atomicidade:** atualização da conexão, auditoria e liberação da guarda de renovação são feitas no mesmo batch D1. A revogação Google concorrente com reconexão ainda exige análise; validar tudo na etapa final antes de ativar OAuth.
+
+> **OAuth — reconexão:** reutilização de refresh token anterior exige na escrita ausência de guarda e versão cifrada anterior intacta, evitando restaurá-lo após renovação/desconexão concorrente. Validar interleavings antes de ativar.
+
+> **OAuth — feedback:** renovação em curso e resultado incerto têm respostas e orientações distintas no app. O limite de 30 segundos muda somente a mensagem; não libera a guarda. Validação concorrente e revisão de recuperação seguem pendentes antes da ativação.
+
+> **OAuth — proteção inicial:** migration 0029 e guarda D1 serializam refresh por tenant/provedor; resultado incerto conserva a guarda até reconexão/desconexão. A implementação precisa de mensagens específicas, revisão das corridas com reconexão/revogação e validação sintética final antes de ativar provedores reais.
+
+> **Pendência OAuth concorrente:** o compare-and-swap atual protege a gravação D1, mas não impede duas chamadas simultâneas ao endpoint de refresh. Desenhar e implementar coordenação distribuída, inclusive desconexão/reconexão, expiração e perda de resposta com rotação; demonstrar com fixture sintética antes de habilitar OAuth real. Ver checkpoint.
+
+> **Saída do conteúdo social:** proteção de navegação com confirmação de descarte implementada no stack; validar botão de retorno, Android e saída/reload Web na rodada final.
+
 > **Conteúdo social:** proteger texto ao abrir outro rascunho, criar outro e substituir pela estrutura; confirmação implementada. Revisar proteção ao sair da tela e validar a jornada na bateria final.
 
 > **Pesquisa — edição preservada:** ao editar consulta salva, trocar de lista/consulta ou arquivar não descarta a edição; o cancelamento pede confirmação. Testar todos os caminhos na rodada final Web/Android.

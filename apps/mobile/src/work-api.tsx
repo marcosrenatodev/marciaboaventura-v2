@@ -116,7 +116,7 @@ type WorkContextValue = {
   clearIntegrationSettings: (provider: IntegrationProvider) => Promise<void>;
   startIntegrationConnection: (provider: IntegrationProvider) => Promise<string>;
   disconnectIntegration: (provider: IntegrationProvider) => Promise<{ disconnected: boolean; providerRevocation: "confirmed" | "not_confirmed" | "not_supported" }>;
-  loadCourtPublications: (caseId: string) => Promise<CourtPublications>;
+  loadCourtPublications: (caseId: string, cursor?: string) => Promise<CourtPublications>;
   discoverCourtCases: (query: z.infer<typeof DjenDiscoveryRequestSchema>) => Promise<z.infer<typeof DjenDiscoveryResponseSchema>>;
   syncCourtPublications: (caseId: string) => Promise<CourtPublications>;
   setCourtPublicationReview: (caseId: string, sourceHash: string, status: "pending" | "reviewed", expectedUpdatedAt: string | null) => Promise<z.infer<typeof CourtPublicationReviewStateSchema>>;
@@ -209,6 +209,8 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
       if (response.status === 413 || failure?.error === "document_too_large") throw new WorkApiError(413, "O PDF excede o limite de 10 MB.");
       if (failure?.error === "pdf_signature_invalid") throw new WorkApiError(response.status, "O arquivo selecionado não é um PDF válido.");
       if (failure?.error === "drive_file_unavailable") throw new WorkApiError(404, "Este arquivo não está mais acessível na conta conectada. Atualize a lista e tente novamente.");
+      if (failure?.error === "integration_refresh_pending") throw new WorkApiError(503, "A conexão está sendo atualizada. Aguarde alguns segundos e tente novamente.");
+      if (failure?.error === "integration_refresh_uncertain") throw new WorkApiError(409, "Não foi possível confirmar a atualização da conexão. Reconecte a conta em Processos → Integrações.");
       if (failure?.error === "drive_download_unavailable" || failure?.error === "drive_provider_unavailable" || failure?.error === "integration_unavailable") throw new WorkApiError(response.status, "O Google Drive ou OneDrive não respondeu. Tente novamente em alguns instantes.");
       if (failure?.error === "drive_rate_limited") throw new WorkApiError(429, `O Drive pediu uma pausa. Tente novamente em ${failure.retryAfterSeconds ?? 30} segundos.`);
       if (failure?.error === "integration_reauthorize_required") throw new WorkApiError(409, "A autorização expirou ou foi revogada. Reconecte a conta em Processos → Integrações.");
@@ -230,6 +232,11 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
       throw new WorkApiError(response.status, "Não foi possível concluir a operação com o Drive. Atualize e tente novamente.");
     }
     if (response.status === 401 || response.status === 403) throw new WorkApiError(response.status, "Sua sessão expirou ou não tem acesso ao escritório. Entre novamente.");
+    if (path.startsWith("/api/court-cases/") && init?.method === "PATCH" && response.status === 409) {
+      const failure = await response.json().catch(() => null) as { error?: string } | null;
+      if (failure?.error === "case_number_has_publication_history") throw new WorkApiError(409, "Este processo já tem histórico de consulta ao DJEN. Para preservar o histórico, cadastre outro processo com o número correto.");
+      throw new WorkApiError(409, "Este registro foi alterado em outra tela. Atualize a lista antes de tentar novamente.");
+    }
     if (path === "/api/court-cases/discover-djen") {
       const failure = await response.json().catch(() => null) as { error?: string; retryAfterSeconds?: number } | null;
       if (failure?.error === "djen_discovery_disabled") throw new WorkApiError(response.status, "A busca por OAB ainda não está liberada neste ambiente. Você pode usar o portal oficial.");
@@ -239,6 +246,7 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
     }
     if (path.includes("/publications")) {
       const failure = await response.json().catch(() => null) as { error?: string; retryAfterSeconds?: number } | null;
+      if (failure?.error === "invalid_cursor") throw new WorkApiError(400, "Não foi possível continuar esta lista. Feche e abra as publicações para começar novamente.");
       if (path.endsWith("/review") && response.status === 409) {
         if (failure?.error === "court_case_archived") throw new WorkApiError(response.status, "Reative o processo antes de alterar a conferência interna da publicação.");
         throw new WorkApiError(response.status, "A conferência foi alterada em outra tela. Atualize a lista antes de continuar.");
@@ -250,6 +258,8 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
       if (failure?.error === "djen_rate_limited") throw new WorkApiError(response.status, `A fonte pediu uma pausa. Tente novamente em ${failure.retryAfterSeconds ?? 3} segundos.`);
       if (failure?.error === "djen_source_unavailable") throw new WorkApiError(response.status, "O DJEN não respondeu. O app manteve as publicações salvas e não tratou a falha como ausência de publicações.");
       if (failure?.error === "djen_invalid_response") throw new WorkApiError(response.status, "A resposta do DJEN mudou ou veio incompleta. Nada foi substituído; confira diretamente a fonte oficial.");
+      if (failure?.error === "djen_environment_conflict") throw new WorkApiError(409, "Há um registro com o mesmo identificador em outro ambiente do DJEN. A consulta não foi salva; confira a fonte oficial e peça suporte.");
+      if (failure?.error === "court_case_changed_during_query") throw new WorkApiError(409, "O número ou estado do processo mudou durante a consulta. O resultado não foi salvo; atualize o processo antes de consultar novamente.");
       if (failure?.error === "process_number_required") throw new WorkApiError(response.status, "Informe um número de processo CNJ válido para consultar o DJEN.");
       if (failure?.error === "court_case_archived") throw new WorkApiError(response.status, "Reative o processo antes de consultar novas publicações.");
       throw new WorkApiError(response.status, "Não foi possível consultar as publicações agora. As informações já salvas continuam disponíveis.");
@@ -686,8 +696,8 @@ export function WorkDataProvider({ children }: PropsWithChildren) {
     });
   }, [session]);
 
-  const loadCourtPublications = useCallback(async (caseId: string) => {
-    const result = await requestJson<unknown>(`/api/court-cases/${encodeURIComponent(caseId)}/publications`, {
+  const loadCourtPublications = useCallback(async (caseId: string, cursor?: string) => {
+    const result = await requestJson<unknown>(`/api/court-cases/${encodeURIComponent(caseId)}/publications${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`, {
       headers: await authCookieHeaders(session),
     });
     return CourtPublicationsResponseSchema.parse(result);

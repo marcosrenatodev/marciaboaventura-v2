@@ -149,19 +149,19 @@ export default function FinanceScreen() {
         {formIssue ? <Text accessibilityLiveRegion="assertive" style={styles.error}>{formIssue}</Text> : null}
         <Text style={styles.strong}>Tipo do lançamento</Text>
         <View style={width < 480 ? styles.stack : styles.columns}>
-          <ActionButton label={kind === "income" ? "Receita selecionada" : "Receita"} secondary onPress={() => setKind("income")} />
-          <ActionButton label={kind === "expense" ? "Despesa selecionada" : "Despesa"} secondary onPress={() => setKind("expense")} />
+          <ActionButton label={kind === "income" ? "Receita selecionada" : "Receita"} secondary disabled={saving} onPress={() => setKind("income")} />
+          <ActionButton label={kind === "expense" ? "Despesa selecionada" : "Despesa"} secondary disabled={saving} onPress={() => setKind("expense")} />
         </View>
         <AccessibleTextInput ref={descriptionInput} accessibilityLabel="Descrição do lançamento" placeholder="Ex.: Honorários" placeholderTextColor={colors.muted}
-          value={description} onChangeText={(value) => { setDescription(value); setFormIssue(""); }} maxLength={160} style={styles.input} />
+          value={description} onChangeText={(value) => { setDescription(value); setFormIssue(""); }} editable={!saving} maxLength={160} style={styles.input} />
         <TourAnchor id="finance.amount">
           <AccessibleTextInput accessibilityLabel="Valor em reais e centavos" placeholder="Ex.: 125,00" placeholderTextColor={colors.muted}
-            value={amount} onChangeText={(value) => { setAmount(value.replace(/[^\d,.]/g, "")); setFormIssue(""); }} keyboardType="decimal-pad" maxLength={17} style={styles.input} />
+            value={amount} onChangeText={(value) => { setAmount(value.replace(/[^\d,.]/g, "")); setFormIssue(""); }} editable={!saving} keyboardType="decimal-pad" maxLength={17} style={styles.input} />
         </TourAnchor>
         <AccessibleTextInput accessibilityLabel="Data de vencimento opcional no formato DD/MM/AAAA" placeholder="Vencimento (DD/MM/AAAA) · opcional" placeholderTextColor={colors.muted}
-          value={dueOn} onChangeText={(value) => { setDueOn(formatDateInputDraft(value)); setFormIssue(""); }} keyboardType="numbers-and-punctuation" maxLength={10} style={styles.input} />
+          value={dueOn} onChangeText={(value) => { setDueOn(formatDateInputDraft(value)); setFormIssue(""); }} editable={!saving} keyboardType="numbers-and-punctuation" maxLength={10} style={styles.input} />
         <AccessibleTextInput accessibilityLabel="Categoria opcional do lançamento" placeholder="Categoria (opcional) · ex.: honorários" placeholderTextColor={colors.muted}
-          value={category} onChangeText={setCategory} maxLength={80} style={styles.input} />
+          value={category} onChangeText={setCategory} editable={!saving} maxLength={80} style={styles.input} />
         <Text style={styles.small}>O valor será convertido para centavos inteiros (BRL). Sem parcelas ou dados bancários.</Text>
         <ActionButton label={saving ? "Salvando…" : editingEntryId ? "Salvar alterações" : "Cadastrar lançamento"} disabled={saving} onPress={saveEntry} />
         <ActionButton label={editingEntryId ? "Cancelar edição" : "Cancelar cadastro"} secondary disabled={saving} onPress={() => setConfirmDiscard(true)} />
@@ -175,7 +175,7 @@ export default function FinanceScreen() {
       headerAction={<TourAnchor id="finance.new-entry">
         <ActionButton label={isFormOpen ? "Fechar formulário de lançamento" : editingEntryId ? "Continuar edição do lançamento" : hasDraft ? "Continuar lançamento" : "Novo lançamento"}
           accessibilityHint={isFormOpen ? "Fecha o formulário e mantém o rascunho para continuar depois." : "Abre o formulário para registrar uma receita ou despesa."}
-          secondary={isFormOpen} onPress={() => isFormOpen ? closeForm() : openForm()} />
+          secondary={isFormOpen} disabled={saving} onPress={() => isFormOpen ? closeForm() : openForm()} />
       </TourAnchor>}>
       {noticeMessage ? <Text accessibilityLiveRegion="polite" style={styles.notice}>{noticeMessage}</Text> : null}
       <Card>
@@ -208,7 +208,7 @@ export default function FinanceScreen() {
           {entryMessages[entry.id] ? <Text accessibilityLiveRegion="polite" style={styles.small}>{entryMessages[entry.id]}</Text> : null}
           {entry.status !== "paid" && entry.status !== "cancelled" ? <Text style={styles.small}>{dueLabel(entry.dueOn, today)}</Text> : null}
           {entry.status === "planned" ? <View style={styles.stack}>
-            <ActionButton label={`Editar lançamento: ${entry.description}`} secondary onPress={() => {
+            <ActionButton label={`Editar lançamento: ${entry.description}`} secondary disabled={saving} onPress={() => {
               if (editingEntryId === entry.id) { openForm(); return; }
               if (hasDraft) {
                 setNoticeMessage("Há um rascunho de lançamento. Continue ou descarte o rascunho antes de editar outro registro.");
@@ -218,16 +218,16 @@ export default function FinanceScreen() {
               setDueOn(isoDateToInput(entry.dueOn ?? "")); setCategory(entry.category ?? ""); setKind(entry.kind); setEditingEntryVersion(entry.updatedAt); setFormIssue(""); setFormOpen(true);
               setFormNavigationVersion((version) => version + 1);
             }} />
-            <ActionButton label={entry.kind === "income" ? `Marcar como recebido: ${entry.description}` : `Marcar como pago: ${entry.description}`} secondary disabled={Boolean(statusSavingEntryId)} onPress={() => {
+            <ActionButton label={entry.kind === "income" ? `Marcar como recebido: ${entry.description}` : `Marcar como pago: ${entry.description}`} secondary disabled={saving || Boolean(statusSavingEntryId)} onPress={() => {
               changeEntryStatus(entry.id, "paid", entry.updatedAt);
             }} />
             {pendingCancellationEntryId === entry.id ? <View style={styles.tight}>
               <Text style={styles.small}>Cancelar este lançamento previsto? Ele permanecerá no histórico.</Text>
-              <ActionButton label={`Confirmar cancelamento: ${entry.description}`} disabled={Boolean(statusSavingEntryId)} onPress={() => {
+              <ActionButton label={`Confirmar cancelamento: ${entry.description}`} disabled={saving || Boolean(statusSavingEntryId)} onPress={() => {
                 changeEntryStatus(entry.id, "cancelled", entry.updatedAt);
               }} />
               <ActionButton label={`Manter lançamento: ${entry.description}`} secondary disabled={Boolean(statusSavingEntryId)} onPress={() => setPendingCancellationEntryId(null)} />
-            </View> : <ActionButton label={`Cancelar lançamento: ${entry.description}`} secondary disabled={Boolean(statusSavingEntryId)} onPress={() => {
+            </View> : <ActionButton label={`Cancelar lançamento: ${entry.description}`} secondary disabled={saving || Boolean(statusSavingEntryId)} onPress={() => {
               setPendingCancellationEntryId(entry.id);
               setEntryMessages((current) => ({ ...current, [entry.id]: "" }));
             }} />}

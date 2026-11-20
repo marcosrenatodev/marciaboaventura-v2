@@ -1,7 +1,7 @@
 import { AccessibleTextInput } from "@/components/AccessibleTextInput";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Linking, Platform, Pressable, Share, Text, View } from "react-native";
-import { useRouter } from "expo-router";
+import { usePreventRemove, useRouter } from "expo-router";
 import { SocialContentDraftCreateSchema } from "@marcia/contracts";
 import { ActionButton, Card, Heading, Screen } from "@/components/Ui";
 import { useAuth } from "@/auth";
@@ -29,12 +29,26 @@ export default function ContentScreen() {
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [pendingAction, setPendingAction] = useState<{ type: "new" | "template" } | { type: "open"; draft: SocialContentDraftItem } | null>(null);
+  const [confirmExit, setConfirmExit] = useState(false);
+  const [allowExit, setAllowExit] = useState(false);
+  const pendingNavigation = useRef<(() => void) | null>(null);
 
   const drafts = demoMode ? demoDrafts : api.socialContentDrafts;
   const selectedDraft = drafts.find((item) => item.id === selectedDraftId) ?? null;
   const dirty = selectedDraft
     ? topic !== selectedDraft.topic || content !== selectedDraft.content || platform !== selectedDraft.platform
     : Boolean(topic.trim() || content.trim());
+  usePreventRemove((dirty || saving) && !allowExit, ({ repeat }) => {
+    if (saving) { setMessage("Aguarde o salvamento terminar antes de sair."); return; }
+    pendingNavigation.current = repeat;
+    setConfirmExit(true);
+  });
+  useEffect(() => {
+    if (!allowExit || !pendingNavigation.current) return;
+    const repeat = pendingNavigation.current;
+    pendingNavigation.current = null;
+    repeat();
+  }, [allowExit]);
   const template = "Explique a regra em linguagem simples, informe a fonte pública e diga quais pontos podem depender do caso concreto. Revise a informação e a atualização da fonte antes de publicar.";
 
   function performAction(action: { type: "new" | "template" } | { type: "open"; draft: SocialContentDraftItem }) {
@@ -139,6 +153,11 @@ export default function ContentScreen() {
 
   return <Screen title="Conteúdo para compartilhar" subtitle="Prepare um texto informativo e revise antes de copiar para uma rede social.">
     <ActionButton label="Voltar ao escritório" secondary onPress={() => router.replace("/(tabs)")} />
+    {confirmExit ? <Card>
+      <Text accessibilityLiveRegion="assertive" style={styles.text}>Sair e descartar as alterações ainda não salvas?</Text>
+      <ActionButton label="Descartar alterações e sair" onPress={() => { setConfirmExit(false); setAllowExit(true); }} />
+      <ActionButton label="Continuar editando" secondary onPress={() => { pendingNavigation.current = null; setConfirmExit(false); }} />
+    </Card> : null}
     <Card style={styles.priority}>
       <Heading>Um rascunho de cada vez</Heading>
       <Text style={styles.text}>Escreva para informar. O app não publica, não impulsiona anúncios e não envia seu texto às redes sociais.</Text>

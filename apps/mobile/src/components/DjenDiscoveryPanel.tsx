@@ -43,6 +43,10 @@ export function DjenDiscoveryPanel({ search, onSelect, existingNumbers, selectio
 
   async function load(page: number) {
     if (inFlight.current) return;
+    if (page !== 1 && (!latest || !latest.hasMore || page !== latest.page + 1)) {
+      setIssue("Não foi possível continuar esta busca. Altere a busca para começar novamente.");
+      return;
+    }
     const parsed = DjenDiscoveryRequestSchema.safeParse({ oabNumber: oabNumber.trim(), oabState, startDate, endDate, page });
     if (!parsed.success) {
       setIssue("Informe o número da OAB, a UF e um período de até 31 dias. Use AAAA-MM-DD nas datas.");
@@ -88,6 +92,9 @@ export function DjenDiscoveryPanel({ search, onSelect, existingNumbers, selectio
       <Text style={styles.small}>{startDate} a {endDate} · Página {latest.page}
         {latest.sourceCount === null ? "" : ` · ${latest.sourceCount} publicações informadas pela fonte`}</Text>
       <Text style={styles.small}>Fonte: DJEN · Consultado em {new Date(latest.checkedAt).toLocaleString("pt-BR")}</Text>
+      <Text style={styles.small}>Cobertura não confirmada: esta busca não garante que todos os processos ou publicações da inscrição foram encontrados. Confira diretamente no portal oficial.</Text>
+      {new Set(pages.flatMap((page) => page.sourceCount === null ? [] : [page.sourceCount])).size > 1 ? <Text accessibilityLiveRegion="polite" style={styles.small}>A quantidade informada pela fonte mudou durante a consulta. Os resultados podem ter mudado entre páginas; confira no portal ou faça uma nova busca.</Text> : null}
+      {latest.hasMore && latest.page < DjenDiscoveryPageLimit ? <Text style={styles.small}>Ainda há páginas a consultar; a lista mostrada está incompleta.</Text> : null}
       {pages.some(({ omittedCount }) => omittedCount > 0) ? <Text style={styles.small}>A busca omitiu itens com restrição indicada ou sem dados suficientes para conferência.</Text> : null}
       {!candidates.size ? <Text style={styles.small}>Nenhum processo elegível nesta busca até agora. Confira a inscrição e o período ou consulte a fonte oficial.</Text> : null}
       {selectionBlocked ? <Text style={styles.small}>Conclua ou descarte o cadastro em andamento antes de usar um resultado.</Text> : null}

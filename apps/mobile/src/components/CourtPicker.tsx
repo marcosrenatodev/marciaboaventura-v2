@@ -6,11 +6,12 @@ import { colors, styles } from "@/theme";
 import { AccessibleTextInput } from "@/components/AccessibleTextInput";
 import { ActionButton } from "@/components/Ui";
 
-export function CourtPicker({ courtName, jurisdiction, triggerRef, onSelect }: {
+export function CourtPicker({ courtName, jurisdiction, triggerRef, onSelect, disabled = false }: {
   courtName: string;
   jurisdiction: string;
   triggerRef: RefObject<ViewInstance | null>;
   onSelect: (name: string, jurisdiction: string) => void;
+  disabled?: boolean;
 }) {
   const [mode, setMode] = useState<"closed" | "list" | "custom">("closed");
   const [customName, setCustomName] = useState("");
@@ -31,9 +32,9 @@ export function CourtPicker({ courtName, jurisdiction, triggerRef, onSelect }: {
       <ActionButton ref={triggerRef} testID="court-picker-trigger"
         label={selectedLabel || "Selecionar tribunal"}
         accessibilityLabel={selectedLabel ? `Selecionar tribunal do processo. Atual: ${selectedLabel}` : "Selecionar tribunal do processo"}
-        expanded={mode !== "closed"} secondary onPress={() => setMode(mode === "closed" ? "list" : "closed")} />
+        expanded={!disabled && mode !== "closed"} secondary disabled={disabled} onPress={() => setMode(mode === "closed" ? "list" : "closed")} />
     </TourAnchor>
-    {mode === "list" ? <View style={styles.tight}>
+    {!disabled && mode === "list" ? <View style={styles.tight}>
       <Text style={styles.small}>Tribunais com atalho para consulta manual no portal oficial</Text>
       {courtsWithOfficialPortals.map((court) => <ActionButton key={court.code} testID={`court-option-${court.code}`}
         label={`${court.code} · ${court.name}`} secondary onPress={() => select(court.name, court.jurisdiction)} />)}
@@ -44,7 +45,7 @@ export function CourtPicker({ courtName, jurisdiction, triggerRef, onSelect }: {
         if (Platform.OS === "web") requestAnimationFrame(() => customNameRef.current?.focus());
       }} />
     </View> : null}
-    {mode === "custom" ? <View style={styles.tight}>
+    {!disabled && mode === "custom" ? <View style={styles.tight}>
       <Text style={styles.strong}>Outro tribunal</Text>
       <AccessibleTextInput ref={customNameRef} testID="court-name-input" accessibilityLabel="Nome do outro tribunal" placeholder="Nome do tribunal" placeholderTextColor={colors.muted}
         value={customName} onChangeText={setCustomName} maxLength={160} style={styles.input} />

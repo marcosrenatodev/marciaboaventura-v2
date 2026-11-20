@@ -677,11 +677,13 @@ function configuredPickerOrigin(env: Bindings): string | null {
 
 async function readIntegrationSettings(env: Bindings, auth: TenantSession): Promise<Response> {
   if (env.INTEGRATION_CREDENTIALS_ENABLED !== "true") return jsonResponse({ error: "integration_settings_disabled" }, 503);
-  const [rows, connectionRows] = await Promise.all([
+  const [rows, connectionRows, refreshRows] = await Promise.all([
     env.DB.prepare("SELECT provider, ciphertext, iv, key_version, updated_at FROM integration_credentials WHERE tenant_id = ?1")
       .bind(auth.tenant.id).all<IntegrationCredentialRow>(),
     env.DB.prepare("SELECT tenant_id, provider, ciphertext, iv, key_version, connected_at, updated_at, connected_by_user_id FROM integration_connections WHERE tenant_id = ?1")
       .bind(auth.tenant.id).all<IntegrationConnectionRow>(),
+    env.DB.prepare("SELECT provider, started_at FROM integration_refresh_guards WHERE tenant_id = ?1")
+      .bind(auth.tenant.id).all<{ provider: IntegrationProvider; started_at: string }>(),
   ]);
   const key = await integrationEncryptionKey(env);
   if ((rows.results.length > 0 || connectionRows.results.length > 0) && !key) return jsonResponse({ error: "vault_not_configured" }, 503);
@@ -710,7 +712,10 @@ async function readIntegrationSettings(env: Bindings, auth: TenantSession): Prom
     for (const provider of ["google_drive", "microsoft_graph"] as const) {
       const credential = credentials.get(provider);
       const connection = connections.get(provider);
-      const status = integrationStatus(provider, credential?.value ?? {}, credential?.updatedAt ?? null, connection?.value ?? null, connection?.connectedAt ?? null);
+      const guard = refreshRows.results.find((row) => row.provider === provider);
+      const age = guard ? Date.now() - Date.parse(guard.started_at) : Number.NaN;
+      const refreshState = !guard ? "idle" as const : Number.isFinite(age) && age >= 0 && age < 30_000 ? "pending" as const : "uncertain" as const;
+      const status = { ...integrationStatus(provider, credential?.value ?? {}, credential?.updatedAt ?? null, connection?.value ?? null, connection?.connectedAt ?? null), refreshState };
       if (provider === "google_drive") settings.googleDrive = status;
       else settings.microsoftGraph = status;
     }
@@ -1040,13 +1045,45 @@ async function loadIntegrationConnection(env: Bindings, tenantId: string, provid
   return { row, value: await decryptIntegrationConnection(row, key) };
 }
 
+class IntegrationRefreshGuardError extends Error {
+  constructor(readonly state: "pending" | "uncertain") { super("Integration refresh unavailable"); }
+}
+
+function integrationRefreshError(error: unknown): Response | null {
+  if (!(error instanceof IntegrationRefreshGuardError)) return null;
+  return error.state === "pending"
+    ? jsonResponse({ error: "integration_refresh_pending" }, 503)
+    : jsonResponse({ error: "integration_refresh_uncertain" }, 409);
+}
+
 async function integrationAccessToken(env: Bindings, auth: TenantSession, provider: IntegrationProvider): Promise<{ accessToken: string; expiresAt: string } | null> {
   const key = await integrationEncryptionKey(env);
   if (!key) throw new Error("Integration key unavailable");
-  const stored = await loadIntegrationConnection(env, auth.tenant.id, provider);
+  let stored = await loadIntegrationConnection(env, auth.tenant.id, provider);
   if (!stored) return null;
   const now = Date.now();
   if (Date.parse(stored.value.expiresAt) > now + 90_000) return { accessToken: stored.value.accessToken, expiresAt: stored.value.expiresAt };
+  if (!stored.value.refreshToken) return null;
+
+  const attemptId = crypto.randomUUID();
+  const guard = await env.DB.prepare(`INSERT INTO integration_refresh_guards (tenant_id, provider, attempt_id, started_at)
+    VALUES (?1, ?2, ?3, ?4) ON CONFLICT (tenant_id, provider) DO NOTHING`)
+    .bind(auth.tenant.id, provider, attemptId, new Date().toISOString()).run();
+  if ((guard.meta.changes ?? 0) !== 1) {
+    const existing = await env.DB.prepare("SELECT started_at FROM integration_refresh_guards WHERE tenant_id = ?1 AND provider = ?2")
+      .bind(auth.tenant.id, provider).first<{ started_at: string }>();
+    const age = existing ? Date.now() - Date.parse(existing.started_at) : Number.NaN;
+    throw new IntegrationRefreshGuardError(Number.isFinite(age) && age >= 0 && age < 30_000 ? "pending" : "uncertain");
+  }
+  // Reload under the guard: another request may have refreshed or disconnected
+  // between our first read and the insert. Uncertain provider outcomes keep the
+  // guard until a new OAuth connection or disconnect resets it.
+  stored = await loadIntegrationConnection(env, auth.tenant.id, provider);
+  if (!stored || Date.parse(stored.value.expiresAt) > Date.now() + 90_000) {
+    await env.DB.prepare("DELETE FROM integration_refresh_guards WHERE tenant_id = ?1 AND provider = ?2 AND attempt_id = ?3")
+      .bind(auth.tenant.id, provider, attemptId).run();
+    return stored ? { accessToken: stored.value.accessToken, expiresAt: stored.value.expiresAt } : null;
+  }
   if (!stored.value.refreshToken) return null;
 
   const credential = await storedIntegrationCredential(env, auth.tenant.id, provider);
@@ -1081,14 +1118,17 @@ async function integrationAccessToken(env: Bindings, auth: TenantSession, provid
   const updatedAt = new Date().toISOString();
   const results = await env.DB.batch([
     env.DB.prepare(`UPDATE integration_connections SET ciphertext = ?3, iv = ?4, key_version = 1, updated_at = ?5
-      WHERE tenant_id = ?1 AND provider = ?2 AND ciphertext = ?6 AND iv = ?7`)
-      .bind(auth.tenant.id, provider, encrypted.ciphertext, encrypted.iv, updatedAt, stored.row.ciphertext, stored.row.iv),
+      WHERE tenant_id = ?1 AND provider = ?2 AND ciphertext = ?6 AND iv = ?7
+        AND EXISTS (SELECT 1 FROM integration_refresh_guards WHERE tenant_id = ?1 AND provider = ?2 AND attempt_id = ?8)`)
+      .bind(auth.tenant.id, provider, encrypted.ciphertext, encrypted.iv, updatedAt, stored.row.ciphertext, stored.row.iv, attemptId),
     env.DB.prepare(`INSERT INTO integration_connection_audit_events (
       tenant_id, event_id, provider, actor_user_id, action, created_at, request_id, metadata
     ) SELECT ?1, ?2, ?3, ?4, 'token_refreshed', ?5, ?6, ?7 WHERE changes() = 1`)
       .bind(auth.tenant.id, crypto.randomUUID(), provider, auth.user.id, updatedAt, crypto.randomUUID(), JSON.stringify({ scopes: updated.grantedScopes })),
+    env.DB.prepare("DELETE FROM integration_refresh_guards WHERE tenant_id = ?1 AND provider = ?2 AND attempt_id = ?3 AND changes() = 1")
+      .bind(auth.tenant.id, provider, attemptId),
   ]);
-  if ((results[0]?.meta.changes ?? 0) === 1 && (results[1]?.meta.changes ?? 0) === 1) {
+  if ((results[0]?.meta.changes ?? 0) === 1 && (results[1]?.meta.changes ?? 0) === 1 && (results[2]?.meta.changes ?? 0) === 1) {
     return { accessToken: updated.accessToken, expiresAt: updated.expiresAt };
   }
   const latest = await loadIntegrationConnection(env, auth.tenant.id, provider);
@@ -1216,9 +1256,13 @@ async function completeIntegrationAuthorization(request: Request, env: Bindings,
     const previousRow = await env.DB.prepare("SELECT tenant_id, provider, ciphertext, iv, key_version, connected_at, updated_at, connected_by_user_id FROM integration_connections WHERE tenant_id = ?1 AND provider = ?2")
       .bind(transaction.tenant_id, provider).first<IntegrationConnectionRow>();
     const previous = previousRow ? await decryptIntegrationConnection(previousRow, key) : null;
+    const refreshGuard = await env.DB.prepare("SELECT 1 AS present FROM integration_refresh_guards WHERE tenant_id = ?1 AND provider = ?2")
+      .bind(transaction.tenant_id, provider).first<{ present: number }>();
     let connection = result.connection;
-    if (!connection.refreshToken && previous?.accountId === connection.accountId && previous.refreshToken) {
+    let reusedRefreshToken = false;
+    if (!connection.refreshToken && !refreshGuard && previous?.accountId === connection.accountId && previous.refreshToken) {
       connection = StoredIntegrationConnectionSchema.parse({ ...connection, refreshToken: previous.refreshToken });
+      reusedRefreshToken = true;
     }
     if (!connection.refreshToken) return finish("failed");
     const encrypted = await encryptIntegrationConnection(connection, key, transaction.tenant_id, provider, transaction.user_id);
@@ -1228,16 +1272,21 @@ async function completeIntegrationAuthorization(request: Request, env: Bindings,
         tenant_id, provider, ciphertext, iv, key_version, connected_at, updated_at, connected_by_user_id
       ) SELECT ?1, ?2, ?3, ?4, 1, ?5, ?6, ?7
       WHERE EXISTS (SELECT 1 FROM integration_oauth_transactions WHERE state_hash = ?8 AND tenant_id = ?1 AND provider = ?2 AND user_id = ?7 AND status = 'exchanging')
+        AND (?9 = 0 OR (NOT EXISTS (SELECT 1 FROM integration_refresh_guards WHERE tenant_id = ?1 AND provider = ?2)
+          AND EXISTS (SELECT 1 FROM integration_connections WHERE tenant_id = ?1 AND provider = ?2 AND ciphertext = ?10 AND iv = ?11)))
       ON CONFLICT (tenant_id, provider) DO UPDATE SET ciphertext = excluded.ciphertext, iv = excluded.iv,
         key_version = excluded.key_version, updated_at = excluded.updated_at, connected_by_user_id = excluded.connected_by_user_id`)
-      .bind(transaction.tenant_id, provider, encrypted.ciphertext, encrypted.iv, connectedAt, updatedAt, transaction.user_id, stateHash);
+      .bind(transaction.tenant_id, provider, encrypted.ciphertext, encrypted.iv, connectedAt, updatedAt, transaction.user_id, stateHash,
+        reusedRefreshToken ? 1 : 0, previousRow?.ciphertext ?? "", previousRow?.iv ?? "");
     const audit = env.DB.prepare(`INSERT INTO integration_connection_audit_events (
         tenant_id, event_id, provider, actor_user_id, action, created_at, request_id, metadata
       ) SELECT ?1, ?2, ?3, ?4, 'connected', ?5, ?6, ?7 WHERE changes() = 1`)
       .bind(transaction.tenant_id, crypto.randomUUID(), provider, transaction.user_id, updatedAt,
         request.headers.get("CF-Ray") ?? crypto.randomUUID(), JSON.stringify({ scopes: connection.grantedScopes }));
     const removeTransaction = env.DB.prepare("DELETE FROM integration_oauth_transactions WHERE state_hash = ?1 AND status = 'exchanging'").bind(stateHash);
-    const results = await env.DB.batch([write, audit, removeTransaction]);
+    const clearRefreshGuard = env.DB.prepare("DELETE FROM integration_refresh_guards WHERE tenant_id = ?1 AND provider = ?2 AND changes() = 1")
+      .bind(transaction.tenant_id, provider);
+    const results = await env.DB.batch([write, audit, clearRefreshGuard, removeTransaction]);
     if ((results[0]?.meta.changes ?? 0) !== 1 || (results[1]?.meta.changes ?? 0) !== 1) return returnTo("failed");
     return returnTo("connected");
   } catch {
@@ -1247,15 +1296,7 @@ async function completeIntegrationAuthorization(request: Request, env: Bindings,
 
 async function disconnectIntegration(request: Request, env: Bindings, auth: TenantSession, provider: IntegrationProvider): Promise<Response> {
   const now = new Date().toISOString();
-  let priorConnection: StoredIntegrationConnection | null = null;
   try {
-    const row = await env.DB.prepare("SELECT tenant_id, provider, ciphertext, iv, key_version, connected_at, updated_at, connected_by_user_id FROM integration_connections WHERE tenant_id = ?1 AND provider = ?2")
-      .bind(auth.tenant.id, provider).first<IntegrationConnectionRow>();
-    if (row) {
-      const key = await integrationEncryptionKey(env);
-      if (!key) return jsonResponse({ error: "vault_not_configured" }, 503);
-      priorConnection = await decryptIntegrationConnection(row, key);
-    }
     const results = await env.DB.batch([
       env.DB.prepare("DELETE FROM integration_oauth_transactions WHERE tenant_id = ?1 AND provider = ?2").bind(auth.tenant.id, provider),
       env.DB.prepare("DELETE FROM integration_connections WHERE tenant_id = ?1 AND provider = ?2").bind(auth.tenant.id, provider),
@@ -1263,24 +1304,12 @@ async function disconnectIntegration(request: Request, env: Bindings, auth: Tena
           tenant_id, event_id, provider, actor_user_id, action, created_at, request_id, metadata
         ) SELECT ?1, ?2, ?3, ?4, 'disconnected', ?5, ?6, '{}' WHERE changes() = 1`)
         .bind(auth.tenant.id, crypto.randomUUID(), provider, auth.user.id, now, request.headers.get("CF-Ray") ?? crypto.randomUUID()),
+      env.DB.prepare("DELETE FROM integration_refresh_guards WHERE tenant_id = ?1 AND provider = ?2").bind(auth.tenant.id, provider),
     ]);
     if ((results[2]?.meta.changes ?? 0) !== (results[1]?.meta.changes ?? 0)) return jsonResponse({ error: "write_failed" }, 500);
-    let providerRevocation: "confirmed" | "not_confirmed" | "not_supported" = provider === "google_drive" ? "not_confirmed" : "not_supported";
-    if (provider === "google_drive" && priorConnection?.refreshToken) {
-      try {
-        const revokeResponse = await fetch(oauthProviderEndpoint(env, provider, "revoke"), {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({ token: priorConnection.refreshToken }),
-          signal: AbortSignal.timeout(8_000),
-          redirect: "manual",
-        });
-        providerRevocation = revokeResponse.ok || revokeResponse.status === 400 ? "confirmed" : "not_confirmed";
-      } catch { providerRevocation = "not_confirmed"; }
-    }
     return jsonResponse({
       disconnected: (results[1]?.meta.changes ?? 0) === 1,
-      providerRevocation,
+      providerRevocation: provider === "google_drive" ? "not_confirmed" : "not_supported",
     }, 200);
   } catch {
     return jsonResponse({ error: "write_failed" }, 500);
@@ -1310,8 +1339,8 @@ async function googlePickerSession(request: Request, env: Bindings, auth: Tenant
       accessToken: token.accessToken,
       expiresAt: token.expiresAt,
     }), 200);
-  } catch {
-    return jsonResponse({ error: "integration_unavailable" }, 503);
+  } catch (error) {
+    return integrationRefreshError(error) ?? jsonResponse({ error: "integration_unavailable" }, 503);
   }
 }
 
@@ -1375,8 +1404,8 @@ async function listMicrosoftDriveFiles(request: Request, env: Bindings, auth: Te
       if (nextPageToken && nextPageToken.length > 4096) return jsonResponse({ error: "drive_provider_response_invalid" }, 502);
     }
     return jsonResponse(CloudDriveFilesResponseSchema.parse({ items, nextPageToken }), 200);
-  } catch {
-    return jsonResponse({ error: "integration_unavailable" }, 503);
+  } catch (error) {
+    return integrationRefreshError(error) ?? jsonResponse({ error: "integration_unavailable" }, 503);
   }
 }
 
@@ -1476,8 +1505,8 @@ async function importCloudDriveFile(request: Request, env: Bindings, auth: Tenan
     if (bytes === "too_large") return jsonResponse({ error: "document_too_large" }, 413);
     if (bytes.byteLength < 5 || new TextDecoder().decode(bytes.subarray(0, 5)) !== "%PDF-") return jsonResponse({ error: "pdf_signature_invalid" }, 415);
     return importPdfIntoVault(request, env, auth, { bytes, fileName: name, caseId });
-  } catch {
-    return jsonResponse({ error: "drive_provider_unavailable" }, 502);
+  } catch (error) {
+    return integrationRefreshError(error) ?? jsonResponse({ error: "drive_provider_unavailable" }, 502);
   }
 }
 
@@ -1568,10 +1597,27 @@ async function courtCaseNotes(request: Request, env: Bindings, auth: TenantSessi
   }
 }
 
-async function readCourtPublications(env: Bindings, auth: TenantSession, caseId: string): Promise<Response> {
+async function readCourtPublications(env: Bindings, auth: TenantSession, caseId: string, cursorValue: string | null = null): Promise<Response> {
+  let cursor: { firstSeenAt: string; hash: string } | null = null;
+  if (cursorValue !== null) {
+    try {
+      if (cursorValue.length > 1024 || !/^[A-Za-z0-9_-]+$/.test(cursorValue)) throw new Error("invalid cursor");
+      const raw = cursorValue.replace(/-/g, "+").replace(/_/g, "/");
+      const parsed = z.object({ firstSeenAt: z.string().datetime({ offset: true }), hash: z.string().regex(/^[A-Za-z0-9_-]{12,128}$/) }).strict()
+        .safeParse(JSON.parse(atob(raw + "=".repeat((4 - raw.length % 4) % 4))));
+      if (!parsed.success) throw new Error("invalid cursor");
+      cursor = parsed.data;
+    } catch { return jsonResponse({ error: "invalid_cursor" }, 400); }
+  }
   const courtCase = await env.DB.prepare("SELECT case_id FROM court_cases WHERE tenant_id = ?1 AND case_id = ?2 AND deleted_at IS NULL")
     .bind(auth.tenant.id, caseId).first<{ case_id: string }>();
   if (!courtCase) return jsonResponse({ error: "not_found" }, 404);
+  if (cursor) {
+    const anchor = await env.DB.prepare(`SELECT 1 FROM court_publications
+      WHERE tenant_id = ?1 AND case_id = ?2 AND first_seen_at = ?3 AND source_hash = ?4`)
+      .bind(auth.tenant.id, caseId, cursor.firstSeenAt, cursor.hash).first();
+    if (!anchor) return jsonResponse({ error: "invalid_cursor" }, 400);
+  }
 
   const [publicationRows, syncRow] = await Promise.all([
     env.DB.prepare(`SELECT p.source_hash, p.source_environment, p.tribunal_code, p.communication_type, p.available_on, p.first_seen_at, p.last_seen_at,
@@ -1579,14 +1625,19 @@ async function readCourtPublications(env: Bindings, auth: TenantSession, caseId:
       FROM court_publications p LEFT JOIN court_publication_reviews r
         ON r.tenant_id = p.tenant_id AND r.case_id = p.case_id AND r.source_hash = p.source_hash
       WHERE p.tenant_id = ?1 AND p.case_id = ?2
-      ORDER BY p.available_on DESC, p.last_seen_at DESC LIMIT 100`)
-      .bind(auth.tenant.id, caseId).all<CourtPublicationRow>(),
+        AND (?3 IS NULL OR p.first_seen_at < ?3 OR (p.first_seen_at = ?3 AND p.source_hash < ?4))
+      ORDER BY p.first_seen_at DESC, p.source_hash DESC LIMIT 101`)
+      .bind(auth.tenant.id, caseId, cursor?.firstSeenAt ?? null, cursor?.hash ?? null).all<CourtPublicationRow>(),
     env.DB.prepare("SELECT status, source_environment, checked_at, returned_count, warning_code FROM court_publication_syncs WHERE tenant_id = ?1 AND case_id = ?2")
       .bind(auth.tenant.id, caseId).first<CourtPublicationSyncRow>(),
   ]);
 
   const environment = djenEnvironment(env) ?? "homologation";
-  const items = publicationRows.results.map((row) => CourtPublicationSchema.parse({
+  const hasMoreSaved = publicationRows.results.length > 100;
+  const pageRows = publicationRows.results.slice(0, 100);
+  const lastRow = pageRows.at(-1);
+  const nextCursor = hasMoreSaved && lastRow ? btoa(JSON.stringify({ firstSeenAt: lastRow.first_seen_at, hash: lastRow.source_hash })).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") : null;
+  const items = pageRows.map((row) => CourtPublicationSchema.parse({
     id: row.source_hash,
     tenantId: auth.tenant.id,
     caseId,
@@ -1623,6 +1674,8 @@ async function readCourtPublications(env: Bindings, auth: TenantSession, caseId:
     sourceUrl: "https://comunica.pje.jus.br/",
     sync,
     items,
+    hasMoreSaved,
+    nextCursor,
   }), 200);
 }
 
@@ -1779,16 +1832,18 @@ async function writeCourtPublicationSync(
   request: Request,
   auth: TenantSession,
   caseId: string,
+  expectedCaseNumber: string,
   status: CourtPublicationSyncRow["status"],
   returnedCount: number,
   warningCode: CourtPublicationSyncRow["warning_code"],
   checkedAt: string,
   environment: DjenEnvironment,
   publications: Awaited<ReturnType<typeof fetchDjenPublications>>["items"] = [],
-): Promise<boolean> {
+): Promise<"saved" | "case_changed" | "environment_conflict" | "failed"> {
   const statements = publications.map((publication) => env.DB.prepare(`INSERT INTO court_publications (
         tenant_id, case_id, source_hash, source_environment, tribunal_code, communication_type, available_on, first_seen_at, last_seen_at
-      ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?8)
+      ) SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?8
+      WHERE EXISTS (SELECT 1 FROM court_cases WHERE tenant_id = ?1 AND case_id = ?2 AND case_number = ?9 AND status = 'active' AND deleted_at IS NULL)
       ON CONFLICT (tenant_id, case_id, source_hash) DO UPDATE SET
         source_environment = excluded.source_environment,
         tribunal_code = excluded.tribunal_code,
@@ -1796,10 +1851,11 @@ async function writeCourtPublicationSync(
         available_on = excluded.available_on,
         last_seen_at = excluded.last_seen_at`)
     .bind(auth.tenant.id, caseId, publication.sourceHash, environment, publication.tribunalCode,
-      publication.communicationType, publication.availableOn, checkedAt));
+      publication.communicationType, publication.availableOn, checkedAt, expectedCaseNumber));
   statements.push(env.DB.prepare(`INSERT INTO court_publication_syncs (
         tenant_id, case_id, status, source_environment, checked_at, returned_count, warning_code, checked_by_user_id
-      ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+      ) SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8
+      WHERE EXISTS (SELECT 1 FROM court_cases WHERE tenant_id = ?1 AND case_id = ?2 AND case_number = ?9 AND status = 'active' AND deleted_at IS NULL)
       ON CONFLICT (tenant_id, case_id) DO UPDATE SET
         status = excluded.status,
         source_environment = excluded.source_environment,
@@ -1807,7 +1863,7 @@ async function writeCourtPublicationSync(
         returned_count = excluded.returned_count,
         warning_code = excluded.warning_code,
         checked_by_user_id = excluded.checked_by_user_id`)
-    .bind(auth.tenant.id, caseId, status, environment, checkedAt, returnedCount, warningCode, auth.user.id));
+    .bind(auth.tenant.id, caseId, status, environment, checkedAt, returnedCount, warningCode, auth.user.id, expectedCaseNumber));
   statements.push(env.DB.prepare(`INSERT INTO court_publication_sync_audit_events (
         tenant_id, event_id, case_id, actor_user_id, status, returned_count, created_at, request_id
       ) SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8 WHERE changes() = 1`)
@@ -1815,9 +1871,13 @@ async function writeCourtPublicationSync(
       request.headers.get("CF-Ray") ?? crypto.randomUUID()));
   try {
     const results = await env.DB.batch(statements);
-    return (results.at(-2)?.meta.changes ?? 0) === 1 && (results.at(-1)?.meta.changes ?? 0) === 1;
-  } catch {
-    return false;
+    if ((results.at(-2)?.meta.changes ?? 0) === 1 && (results.at(-1)?.meta.changes ?? 0) === 1) return "saved";
+    const current = await env.DB.prepare("SELECT case_number, status FROM court_cases WHERE tenant_id = ?1 AND case_id = ?2 AND deleted_at IS NULL")
+      .bind(auth.tenant.id, caseId).first<{ case_number: string | null; status: string }>();
+    return !current || current.status !== "active" || current.case_number !== expectedCaseNumber ? "case_changed" : "failed";
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("publication_environment_conflict")) return "environment_conflict";
+    return "failed";
   }
 }
 
@@ -1887,9 +1947,11 @@ async function syncCourtPublications(request: Request, env: Bindings, auth: Tena
     const retryAfter = rateLimited ? Math.max(3, providerError.retryAfterSeconds ?? 30) : null;
     if (retryAfter !== null) await extendCourtProviderPause(env, retryAfter);
     const warningCode = providerError.code;
-    const recorded = await writeCourtPublicationSync(env, request, auth, caseId,
+    const recorded = await writeCourtPublicationSync(env, request, auth, caseId, processNumber,
       rateLimited ? "rate_limited" : "source_error", 0, warningCode, checkedAt, environment);
-    if (!recorded) return jsonResponse({ error: "write_failed" }, 500);
+    if (recorded === "case_changed") return jsonResponse({ error: "court_case_changed_during_query" }, 409);
+    if (recorded === "environment_conflict") return jsonResponse({ error: "djen_environment_conflict" }, 409);
+    if (recorded !== "saved") return jsonResponse({ error: "write_failed" }, 500);
     return jsonResponse({ error: `djen_${providerError.code}`, retryAfterSeconds: retryAfter }, rateLimited ? 429 : 502);
   }
 
@@ -1902,9 +1964,11 @@ async function syncCourtPublications(request: Request, env: Bindings, auth: Tena
   const publications = sourceResult.items;
   const status = publications.length > 0 ? "items_returned" : "empty_unconfirmed";
   const warningCode = publications.length > 0 ? "coverage_unverified" : "empty_unconfirmed";
-  const saved = await writeCourtPublicationSync(env, request, auth, caseId, status, publications.length,
+  const saved = await writeCourtPublicationSync(env, request, auth, caseId, processNumber, status, publications.length,
     warningCode, checkedAt, environment, publications);
-  if (!saved) return jsonResponse({ error: "write_failed" }, 500);
+  if (saved === "case_changed") return jsonResponse({ error: "court_case_changed_during_query" }, 409);
+  if (saved === "environment_conflict") return jsonResponse({ error: "djen_environment_conflict" }, 409);
+  if (saved !== "saved") return jsonResponse({ error: "write_failed" }, 500);
   return readCourtPublications(env, auth, caseId);
 }
 
@@ -2351,9 +2415,14 @@ async function updateMatterOrCourtCase(request: Request, env: Bindings, auth: Te
   const tenantIndex = updates.length + 3;
   const itemIndex = updates.length + 4;
   const expectedIndex = updates.length + 5;
+  const caseNumberIndex = updates.findIndex((item) => item.column === "case_number") + 1;
+  const caseIdentityGuard = caseNumberIndex ? ` AND (
+    REPLACE(REPLACE(REPLACE(COALESCE(case_number, ''), '.', ''), '-', ''), ' ', '') = REPLACE(REPLACE(REPLACE(COALESCE(?${caseNumberIndex}, ''), '.', ''), '-', ''), ' ', '')
+    OR (NOT EXISTS (SELECT 1 FROM court_publications WHERE tenant_id = ?${tenantIndex} AND case_id = ?${itemIndex})
+      AND NOT EXISTS (SELECT 1 FROM court_publication_syncs WHERE tenant_id = ?${tenantIndex} AND case_id = ?${itemIndex})))` : "";
   const update = env.DB.prepare(
     `UPDATE ${config.table} SET ${setValues.join(", ")}, updated_at = ?${updatedAtIndex}, updated_by_user_id = ?${updatedByIndex}
-     WHERE tenant_id = ?${tenantIndex} AND ${config.idColumn} = ?${itemIndex} AND updated_at = ?${expectedIndex} AND status = 'active' AND deleted_at IS NULL`,
+     WHERE tenant_id = ?${tenantIndex} AND ${config.idColumn} = ?${itemIndex} AND updated_at = ?${expectedIndex} AND status = 'active' AND deleted_at IS NULL${caseIdentityGuard}`,
   ).bind(...updates.map((item) => item.value), now, auth.user.id, auth.tenant.id, itemId, data.expectedUpdatedAt as string);
   const audit = env.DB.prepare(
     `INSERT INTO audit_events (tenant_id, event_id, actor_user_id, entity_type, entity_id, action, created_at, request_id, metadata)
@@ -2364,8 +2433,17 @@ async function updateMatterOrCourtCase(request: Request, env: Bindings, auth: Te
   try {
     const results = await env.DB.batch([update, audit]);
     if ((results[0]?.meta.changes ?? 0) !== 1) {
-      const current = await env.DB.prepare(`SELECT status FROM ${config.table} WHERE tenant_id = ?1 AND ${config.idColumn} = ?2 AND deleted_at IS NULL`)
-        .bind(auth.tenant.id, itemId).first<{ status: string }>();
+      const current = await env.DB.prepare(`SELECT status, updated_at, case_number,
+        EXISTS (SELECT 1 FROM court_publications WHERE tenant_id = ?1 AND case_id = ?2)
+          OR EXISTS (SELECT 1 FROM court_publication_syncs WHERE tenant_id = ?1 AND case_id = ?2) AS has_publication_history
+        FROM ${config.table} WHERE tenant_id = ?1 AND ${config.idColumn} = ?2 AND deleted_at IS NULL`)
+        .bind(auth.tenant.id, itemId).first<{ status: string; updated_at: string; case_number: string | null; has_publication_history: number }>();
+      const requestedNumber = updates.find((item) => item.column === "case_number");
+      const normalized = (value: string | null) => (value ?? "").replace(/[.\- ]/g, "");
+      if (current && current.status === "active" && current.updated_at === data.expectedUpdatedAt && current.has_publication_history && requestedNumber
+        && normalized(current.case_number) !== normalized(requestedNumber.value)) {
+        return jsonResponse({ error: "case_number_has_publication_history" }, 409);
+      }
       return current ? jsonResponse({ error: "conflict" }, 409) : jsonResponse({ error: "not_found" }, 404);
     }
     if ((results[1]?.meta.changes ?? 0) !== 1) return jsonResponse({ error: "write_failed" }, 500);
@@ -2374,6 +2452,7 @@ async function updateMatterOrCourtCase(request: Request, env: Bindings, auth: Te
     if (!row) return jsonResponse({ error: "write_failed" }, 500);
     return jsonResponse({ item: mapRow(entity, row) }, 200);
   } catch (error) {
+    if (error instanceof Error && error.message.includes("case_number_has_publication_history")) return jsonResponse({ error: "case_number_has_publication_history" }, 409);
     if (error instanceof Error && error.message.includes("FOREIGN KEY")) return jsonResponse({ error: "not_found" }, 404);
     return jsonResponse({ error: "write_failed" }, 500);
   }
@@ -3015,7 +3094,9 @@ export default {
         const caseId = publicationSegments[2] ?? "";
         if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(caseId)) return jsonResponse({ error: "not_found" }, 404, cors);
         if (publicationSegments.length === 4 && request.method === "GET") {
-          return secureApiResponse(await readCourtPublications(env, auth, caseId), cors);
+          const query = new URL(request.url).searchParams;
+          if ([...query.keys()].some((key) => key !== "cursor") || query.getAll("cursor").length > 1) return jsonResponse({ error: "invalid_request" }, 400, cors);
+          return secureApiResponse(await readCourtPublications(env, auth, caseId, query.get("cursor")), cors);
         }
         if (publicationSegments.length === 5 && publicationSegments[4] === "sync" && request.method === "POST") {
           if (auth.tenant.role !== "owner") return jsonResponse({ error: "forbidden" }, 403, cors);

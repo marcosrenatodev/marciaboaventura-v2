@@ -1312,7 +1312,7 @@ test("configura o escritório, registra processo, tarefa e financeiro e conserva
   await page.getByRole("button", { name: "Configurações de integrações" }).click();
   await page.getByRole("button", { name: "Desconectar Google Drive" }).click();
   await page.getByRole("button", { name: "Confirmar desconexão Google" }).click();
-  await expect(page.getByText("A conta foi desconectada e o token de atualização foi revogado no Google.")).toBeVisible();
+  await expect(page.getByText("A conta foi desconectada deste app. Para remover a autorização no Google, revise os apps conectados na sua Conta Google.")).toBeVisible();
   await page.getByRole("button", { name: "Remover todas as credenciais Google" }).click();
   await page.getByRole("button", { name: "Confirmar remoção Google" }).click();
   await expect(page.getByText("Credenciais removidas do cofre. A conta nunca esteve conectada a arquivos.")).toBeVisible();
@@ -2384,6 +2384,7 @@ test("configura o escritório, registra processo, tarefa e financeiro e conserva
   const afterStaleRetry = await afterStaleRetryResponse.json() as { items: Array<{ description: string; amountCents: number }> };
   expect(afterStaleRetry.items.find((item) => item.description === serverUpdatedExpenseTitle)?.amountCents).toBe(14_000);
   await page.getByRole("button", { name: "Cancelar edição" }).click();
+  await page.getByRole("button", { name: "Descartar rascunho do lançamento" }).click();
   await expect(page.getByTestId("finance-entry-form")).toHaveCount(0);
   await expect.poll(() => readTotalCents("Total de despesas previstas")).toBe(initialExpenseCents + 14_000);
 

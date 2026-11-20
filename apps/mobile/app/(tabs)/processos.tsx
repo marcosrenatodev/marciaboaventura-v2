@@ -138,25 +138,25 @@ export default function MattersScreen() {
       <Text style={styles.small}>{fromDjen
         ? "Número sugerido a partir de uma publicação do DJEN. Confira os dados antes de cadastrar."
         : "Cadastro manual. Nenhum tribunal foi consultado e nenhum andamento é atualizado automaticamente."}</Text>
-      <CourtPicker courtName={courtName} jurisdiction={jurisdiction} triggerRef={courtPickerTrigger} onSelect={(name, region) => {
+      <CourtPicker courtName={courtName} jurisdiction={jurisdiction} triggerRef={courtPickerTrigger} disabled={savingCase} onSelect={(name, region) => {
         setCourtName(name);
         setJurisdiction(region);
         setCaseIssue("");
       }} />
       <AccessibleTextInput testID="court-jurisdiction-input" accessibilityLabel="Estado ou região do processo" placeholder="Estado ou região (ex.: PR ou Região Sul)" placeholderTextColor={colors.muted}
-        value={jurisdiction} onChangeText={(value) => { setJurisdiction(value); setCaseIssue(""); }} maxLength={120} style={styles.input} />
+        value={jurisdiction} onChangeText={(value) => { setJurisdiction(value); setCaseIssue(""); }} editable={!savingCase} maxLength={120} style={styles.input} />
       <AccessibleTextInput testID="court-number-input" accessibilityLabel="Número CNJ ou identificador local, opcional" placeholder="Número CNJ ou identificador local (opcional)" placeholderTextColor={colors.muted}
-        value={caseNumber} onChangeText={(value) => { setCaseNumber(formatCnjCaseNumber(value)); setCaseIssue(""); }} maxLength={80} style={[styles.input, invalidCnjNumber && { borderColor: colors.error }]} />
+        value={caseNumber} onChangeText={(value) => { setCaseNumber(formatCnjCaseNumber(value)); setCaseIssue(""); }} editable={!savingCase} maxLength={80} style={[styles.input, invalidCnjNumber && { borderColor: colors.error }]} />
       <Text style={styles.small}>Quando o campo contém somente 20 dígitos e separadores, o app confere o dígito verificador e organiza a formatação CNJ. Outros identificadores locais continuam aceitos como texto.</Text>
       {invalidCnjNumber ? <Text accessibilityLiveRegion="assertive" style={[styles.small, { color: colors.error }]}>O dígito verificador não confere. Revise os 20 dígitos antes de salvar.</Text> : null}
       <AccessibleTextInput accessibilityLabel="Identificação curta, opcional" placeholder="Identificação curta (opcional)" placeholderTextColor={colors.muted}
-        value={caseLabel} onChangeText={(value) => { setCaseLabel(value); setCaseIssue(""); }} maxLength={160} style={styles.input} />
+        value={caseLabel} onChangeText={(value) => { setCaseLabel(value); setCaseIssue(""); }} editable={!savingCase} maxLength={160} style={styles.input} />
       <View style={styles.tight}>
         <Text style={styles.strong}>Vincular a um assunto (opcional)</Text>
-        <ActionButton label={selectedMatterId ? "Remover vínculo com assunto" : "Sem assunto vinculado"} secondary onPress={() => { setSelectedMatterId(null); setCaseIssue(""); }} />
+        <ActionButton label={selectedMatterId ? "Remover vínculo com assunto" : "Sem assunto vinculado"} secondary disabled={savingCase} onPress={() => { setSelectedMatterId(null); setCaseIssue(""); }} />
         {api.matters.filter((matter) => matter.status !== "archived").map((matter) => <ActionButton key={matter.id}
           label={selectedMatterId === matter.id ? `Selecionado: ${matter.title}` : `Selecionar assunto: ${matter.title}`}
-          secondary onPress={() => { setSelectedMatterId(matter.id); setCaseIssue(""); }} />)}
+          secondary disabled={savingCase} onPress={() => { setSelectedMatterId(matter.id); setCaseIssue(""); }} />)}
         {api.matters.length === 0 && !api.loading ? <Text style={styles.small}>Cadastre um assunto acima para vinculá-lo aqui.</Text> : null}
       </View>
       <ActionButton label={savingCase ? "Salvando…" : editingCaseId ? "Salvar alterações do processo" : "Cadastrar processo"} disabled={savingCase} onPress={() => {
@@ -199,7 +199,7 @@ export default function MattersScreen() {
       ? <TourAnchor id="cases.new-process">
         <ActionButton label={isCaseFormOpen ? "Fechar formulário de processo" : editingCaseId ? "Continuar edição do processo" : hasCaseDraft ? "Continuar cadastro do processo" : "Novo processo"}
           accessibilityHint={isCaseFormOpen ? "Fecha o formulário mantendo os campos preenchidos para continuar depois." : "Abre o cadastro de processo no início da tela."}
-          secondary={isCaseFormOpen} onPress={() => {
+          secondary={isCaseFormOpen} disabled={savingCase || saving} onPress={() => {
             if (isCaseFormOpen) { setCaseFormOpen(false); setConfirmDiscardCase(false); clearQuickAction(); }
             else openCaseForm();
           }} />
@@ -207,7 +207,7 @@ export default function MattersScreen() {
       : <TourAnchor id="matters.new-matter">
         <ActionButton label={matterFormOpen ? "Fechar formulário de assunto" : editingMatterId ? "Continuar edição do assunto" : title.trim() || selectedClientId ? "Continuar cadastro do assunto" : "Novo assunto"}
           accessibilityHint={matterFormOpen ? "Fecha o formulário mantendo os campos preenchidos para continuar depois." : "Abre o cadastro de assunto no início da tela."}
-          secondary={matterFormOpen} onPress={() => {
+          secondary={matterFormOpen} disabled={savingCase || saving} onPress={() => {
             if (matterFormOpen) { setMatterFormOpen(false); setConfirmDiscardMatter(false); }
             else openMatterForm();
           }} />
@@ -215,6 +215,7 @@ export default function MattersScreen() {
     return <Screen title={titleLabel} subtitle={isCaseView ? "Acompanhe os processos cadastrados pelo escritório." : isClientView ? "Mantenha os contatos essenciais do escritório." : "Organize pastas de trabalho e vínculos com clientes."} scrollToTop={formNavigationVersion * 4 + viewNavigationKey} tourScreenId="cases"
       headerAction={headerAction}>
       <CollectionNavigation selected={activeView} onSelect={(view) => {
+        if (savingCase || saving) return;
         if (view !== "courtCases") { clearQuickAction(); setOabSearchOpen(false); }
         setProcessesView(view);
       }} />
@@ -247,14 +248,14 @@ export default function MattersScreen() {
         <Heading>{editingMatterId ? "Editar assunto" : "Novo assunto"}</Heading>
         {formIssue ? <Text accessibilityLiveRegion="assertive" style={styles.error}>{formIssue}</Text> : null}
         <AccessibleTextInput testID="matter-name-input" ref={matterNameInput} accessibilityLabel="Nome do assunto" placeholder="Ex.: Organização de documentos" placeholderTextColor={colors.muted}
-          value={title} onChangeText={(value) => { setTitle(value); setFormIssue(""); }} maxLength={160} style={styles.input} />
+          value={title} onChangeText={(value) => { setTitle(value); setFormIssue(""); }} editable={!saving} maxLength={160} style={styles.input} />
         <Text style={styles.small}>Vincule um cliente se este assunto for de uma pessoa cadastrada.</Text>
         <View style={styles.tight}>
           <Text style={styles.strong}>Cliente (opcional)</Text>
-          <ActionButton label={selectedClientId ? "Remover vínculo com cliente" : "Sem cliente vinculado"} secondary onPress={() => setSelectedClientId(null)} />
+          <ActionButton label={selectedClientId ? "Remover vínculo com cliente" : "Sem cliente vinculado"} secondary disabled={saving} onPress={() => setSelectedClientId(null)} />
           {api.clients.filter((client) => client.status === "active" || client.id === selectedClientId).map((client) => <ActionButton key={client.id}
             label={`${selectedClientId === client.id ? "Selecionado: " : "Selecionar cliente: "}${client.displayName}${client.status === "archived" ? " (arquivado)" : ""}`}
-            secondary onPress={() => setSelectedClientId(client.id)} />)}
+            secondary disabled={saving} onPress={() => setSelectedClientId(client.id)} />)}
           {api.clients.filter((client) => client.status === "active").length === 0 && !api.loading ? <Text style={styles.small}>Cadastre um cliente no diretório para vinculá-lo.</Text> : null}
         </View>
         <ActionButton label={saving ? "Salvando…" : editingMatterId ? "Salvar alterações do assunto" : "Cadastrar assunto"} disabled={saving} onPress={() => {
@@ -288,6 +289,10 @@ export default function MattersScreen() {
           value={query} onChangeText={updateQuery} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} autoComplete="off"
           style={[styles.input, focused && styles.focused]} autoCorrect={false} returnKeyType="search" maxLength={100} />
         {query ? <ActionButton label={isCaseView ? "Limpar busca de processos" : "Limpar busca de assuntos"} secondary onPress={() => updateQuery("")} /> : null}
+        {isCaseView && query && api.courtCasesNextCursor ? <View style={styles.tight}>
+          <Text accessibilityLiveRegion="polite" style={styles.small}>A busca considera apenas os {api.courtCases.length} processos carregados; há outros registros para consultar.</Text>
+          <ActionButton label={api.courtCasesLoading ? "Ampliando busca…" : "Ampliar busca carregando processos"} secondary disabled={api.courtCasesLoading} onPress={() => void api.loadMoreCourtCases()} />
+        </View> : null}
       </View> : null}
       {!isClientView ? <ApiStatus loading={api.loading} issue={api.issue} empty={false} emptyText="" onRetry={() => void api.refresh()} /> : null}
       {isCaseView && api.sessionInfo && !api.loading && !api.issue && filteredCases.length === 0 ? <Card><Heading>Sem processos</Heading><Text style={styles.text}>{query
@@ -509,12 +514,39 @@ function CourtPublicationsPanel({ api, courtCase }: { api: WorkData; courtCase: 
     setLoading(true); setIssue(""); setMessage("");
     try {
       const result = await api.syncCourtPublications(courtCase.id);
+      const paginationNotice = data && data.items.length > 100 ? " A lista voltou à primeira página; use Carregar mais para ver o restante." : "";
       setData(result);
-      setMessage(result.sync.status === "empty_unconfirmed"
-        ? "A fonte respondeu sem itens. Isso não confirma que não houve publicação."
-        : `A fonte retornou ${result.sync.returnedCount} item(ns) nesta consulta.`);
+      setMessage((result.sync.status === "items_returned"
+        ? `A fonte retornou ${result.sync.returnedCount} item(ns) nesta consulta.`
+        : result.sync.status === "empty_unconfirmed"
+          ? "A fonte respondeu sem itens. Isso não confirma que não houve publicação."
+          : result.sync.status === "rate_limited"
+            ? "O DJEN pediu uma pausa. Os itens anteriores foram preservados; consulte o portal oficial."
+            : "A consulta não confirmou a situação no DJEN. Os itens anteriores foram preservados; confira o portal oficial.") + paginationNotice);
     } catch (error) {
       setIssue(error instanceof Error ? error.message : "Não foi possível consultar o DJEN.");
+      setMessage("A atualização não foi confirmada. A lista exibida pode estar desatualizada; confira a fonte oficial.");
+      try {
+        const refreshed = await api.loadCourtPublications(courtCase.id);
+        setData(refreshed);
+        if (data && data.items.length > 100) setMessage("A atualização não foi confirmada. A lista voltou à primeira página; carregue mais e confira a fonte oficial.");
+      } catch { /* Keep the previous saved view and the warning. */ }
+    } finally { setLoading(false); }
+  };
+
+  const loadMore = async () => {
+    if (loading || !data?.nextCursor) return;
+    const cursor = data.nextCursor;
+    setLoading(true); setIssue("");
+    try {
+      const next = await api.loadCourtPublications(courtCase.id, cursor);
+      setData((current) => {
+        if (!current || current.nextCursor !== cursor) return current;
+        const seen = new Set(current.items.map((item) => item.sourceHash));
+        return { ...next, items: [...current.items, ...next.items.filter((item) => !seen.has(item.sourceHash))] };
+      });
+    } catch (error) {
+      setIssue(error instanceof Error ? error.message : "Não foi possível carregar mais publicações.");
     } finally { setLoading(false); }
   };
 
@@ -533,7 +565,11 @@ function CourtPublicationsPanel({ api, courtCase }: { api: WorkData; courtCase: 
         : "Publicação devolvida para conferência interna.");
     } catch (error) {
       setIssue(error instanceof Error ? error.message : "Não foi possível atualizar a conferência interna.");
-      try { setData(await api.loadCourtPublications(courtCase.id)); } catch { /* Preserve the last saved view if refresh also fails. */ }
+      try {
+        const refreshed = await api.loadCourtPublications(courtCase.id);
+        setData(refreshed);
+        if (data && data.items.length > 100) setMessage("A lista foi atualizada desde a primeira página. Use Carregar mais para voltar aos demais itens.");
+      } catch { /* Preserve the last saved view if refresh also fails. */ }
     } finally { setLoading(false); }
   };
 
@@ -552,6 +588,7 @@ function CourtPublicationsPanel({ api, courtCase }: { api: WorkData; courtCase: 
       {data?.sync.checkedAt ? <Text style={styles.small}>Última consulta: {new Date(data.sync.checkedAt).toLocaleString("pt-BR")} · {data.sync.environment === "production" ? "produção" : "homologação"}</Text> : null}
       {data?.sync.warningCode === "coverage_unverified" ? <Text style={styles.small}>A fonte retornou itens, mas a cobertura e a paginação ainda não foram confirmadas. Confira também o Jus.br e o portal do tribunal.</Text> : null}
       {data?.sync.warningCode === "empty_unconfirmed" ? <Text style={styles.small}>Resposta vazia não confirma ausência de comunicações. Confira o Jus.br e o portal do tribunal.</Text> : null}
+      {data?.sync.warningCode === "rate_limited" ? <Text style={styles.small}>A última tentativa foi limitada pelo DJEN. A lista salva pode estar desatualizada; confira também a fonte oficial.</Text> : null}
       {data?.sync.warningCode === "source_unavailable" || data?.sync.warningCode === "invalid_response"
         ? <Text style={styles.small}>A última tentativa não confirmou a situação no DJEN. Os itens salvos foram preservados; confira a fonte oficial.</Text> : null}
       {data ? <ActionButton label="Abrir consulta oficial do DJEN" secondary onPress={() => {
@@ -559,6 +596,7 @@ function CourtPublicationsPanel({ api, courtCase }: { api: WorkData; courtCase: 
       }} /> : null}
       {data?.items.map((item) => <View key={`${item.environment}-${item.sourceHash}`} style={styles.tight}>
         <Text style={styles.badge}>{item.communicationType || "Comunicação do DJEN"}</Text>
+        <Text style={styles.small}>Origem: DJEN · {item.environment === "production" ? "produção" : "homologação (teste)"}</Text>
         <Text style={styles.text}>{item.availableOn ? `Disponibilizada em ${item.availableOn}` : "Data não informada pela fonte"}{item.tribunalCode ? ` · ${item.tribunalCode}` : ""}</Text>
         <Text accessibilityLabel={item.review.status === "reviewed" ? "Revisão interna concluída" : "Publicação pendente de conferência interna"} style={styles.badge}>
           {item.review.status === "reviewed" ? `Conferida internamente · ${item.review.reviewedAt ? new Date(item.review.reviewedAt).toLocaleString("pt-BR") : "data indisponível"}` : "Pendente de conferência interna"}
@@ -573,6 +611,8 @@ function CourtPublicationsPanel({ api, courtCase }: { api: WorkData; courtCase: 
         }} />
       </View>)}
       {data?.items.length === 0 && data.sync.status === "not_checked" ? <Text style={styles.small}>Ainda não há publicações salvas.</Text> : null}
+      {data?.nextCursor ? <Text style={styles.small}>Mostrando {data.items.length} publicações salvas. Carregue mais para continuar o histórico.</Text> : null}
+      {data?.nextCursor ? <ActionButton label={loading ? "Carregando publicações…" : "Carregar mais publicações salvas"} secondary disabled={loading} onPress={() => void loadMore()} /> : null}
       {message ? <Text accessibilityLiveRegion="polite" style={styles.small}>{message}</Text> : null}
       {data?.items.length ? <Text style={styles.small}>A conferência é um controle interno e não confirma ciência, início de prazo ou ausência de outras comunicações.</Text> : null}
       {data?.providerEnabled && owner && validProcessNumber && courtCase.status !== "archived" ? <ActionButton

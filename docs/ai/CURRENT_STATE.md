@@ -2,6 +2,70 @@
 
 > Atualizado em 19/11/2026. Este arquivo é um checkpoint curto e durável dentro do repositório; o plano mestre contém o histórico e os detalhes completos.
 
+> **Processos e assuntos — salvamento:** campos, seletor de tribunal/vínculos e fechamento ficam bloqueados durante o envio; troca de coleção é ignorada durante essas gravações. Verificar estados visuais, acessibilidade, erro/retry e troca de aba na bateria final. Cliente ainda precisa de revisão equivalente.
+
+> **Agenda — salvamento:** campos de tarefa e compromisso, seleção de assunto, troca de visão e abertura de outra edição ficam bloqueados durante a gravação, evitando perda de mudanças feitas após o envio. Validar sucesso, erro/retry e teclado nas jornadas finais; testes não executados nesta etapa.
+
+> **Financeiro — gravação em andamento:** campos, seleção de tipo, fechamento e abertura de outra edição ficam bloqueados durante o salvamento para evitar perder alterações feitas após o envio. Validar falha/retry e teclado Web/Android na bateria final.
+
+> **Busca em processos paginados:** quando há filtro e páginas ainda não carregadas, a limitação e a ação para ampliar a busca aparecem junto ao campo, antes da lista longa. A busca continua local aos itens carregados; validar fluxo e acessibilidade na E2E final.
+
+> **Cursor de publicações:** antes de paginar, o Worker exige que a âncora exista no processo e escritório autenticados; cursor de outra lista ou registro removido é recusado. O cursor não substitui autorização nem é segredo. Validar isolamento e cursor inválido na etapa final; não executado ainda.
+
+> **Publicações — retomada após atualização:** quando uma consulta ou recuperação de conflito substitui uma lista com mais de 100 itens pela primeira página, a ficha explica como carregar novamente o restante. Se a recuperação falhar, mantém a visualização anterior. Validar comportamento e foco nas jornadas finais.
+
+> **Histórico DJEN — índice e recuperação:** migration `0032` indexa tenant, processo, primeira observação e hash para paginação; a tela mostra quantos itens foram carregados e orienta reiniciar a lista se o cursor for inválido. Confirmar plano de consulta, migrations e jornadas de erro na bateria final; nenhuma validação executada nesta alteração.
+
+> **Paginação de publicações salvas:** API usa cursor por primeira observação e hash, com limite de 100 e vínculo tenant/processo; a ficha carrega mais e elimina duplicatas. É paginação do histórico local, não prova cobertura do DJEN. Pendente validar cursor malformado, empate, inserção concorrente, revisão, 100/101 e isolamento na E2E final; DJEN real segue desligado.
+
+> **Publicações salvas — limite:** a API consulta até 101 registros para sinalizar quando a tela mostra apenas os 100 primeiros; ordenação inclui hash como desempate. A interface avisa que há mais registros e orienta conferir a fonte. Falta paginação para acessar os demais pelo app; validar com 100/101 registros, empates e tenant na bateria final. DJEN segue desligado.
+
+> **DJEN — colisão entre ambientes:** o Worker tenta identificar a rejeição da migration 0031 e informa conflito sem declarar a consulta salva; o app orienta conferência oficial e suporte. O transporte da mensagem de erro do D1 e o rollback do batch precisam ser confirmados com fixture na bateria final; armazenar as duas versões continua pendente.
+
+> **DJEN — isolamento de ambiente:** a ficha identifica produção ou homologação em cada publicação; migration `0031` impede que um hash igual altere silenciosamente o ambiente de uma publicação e sua revisão. Colisão atualmente falha com erro genérico, preservando os registros; falta solução para armazenar ambas separadamente e validar migrações/colisão na bateria final. Gates reais continuam desligados.
+
+> **CNJ — defesa no banco:** migration `0030` adiciona trigger que recusa trocar a identidade do processo com histórico DJEN, inclusive por caminhos futuros que ignorem a condição da API; formatação equivalente continua aceita. Migrations, preservação de registros existentes, corrida e mensagens ainda exigem validação sintética ao final. Não habilitar DJEN antes disso.
+
+> **DJEN — processo alterado durante consulta:** o Worker diferencia alteração/arquivamento durante a consulta de erro de gravação quando detectável e o app informa que o resultado não foi salvo. A comparação posterior é informativa; o bloqueio real permanece na escrita condicional. Validar corridas e erros D1 na bateria final, com conector real desligado.
+
+> **CNJ com histórico:** API distingue bloqueio por histórico DJEN de conflito de versão e a interface orienta cadastrar outro processo com o número correto, preservando o histórico. Falta verificar a distinção, corrida e integridade em D1 na bateria final; DJEN segue desligado.
+
+> **P0 CNJ — proteção inicial:** gravações DJEN condicionam publicações e estado ao número e estado ativo observados antes da chamada; edição do número recusa mudança de identidade quando existe histórico ou estado DJEN, preservando formatação equivalente. Ambas as condições são avaliadas dentro dos batches D1. Falta mensagem específica para conflito, revisão e validação de corridas, migrações e dados existentes na bateria final. O DJEN permanece desligado; não declarar P0 concluído.
+
+> **P0 — vínculo de publicações ao CNJ:** auditoria estática encontrou risco: publicações e estado de consulta usam `case_id`, enquanto a edição permite mudar `case_number`; uma consulta em voo também pode terminar depois da edição. Isso pode associar histórico de um CNJ a outro. Antes de habilitar DJEN, implementar controle transacional de identidade do processo e proteção da consulta em voo, preservando histórico e auditoria; tratar alterações de formatação equivalentes e números nulos, concorrência, arquivamento e tenant. Não apagar publicações para resolver. Criar cenários sintéticos de corrida e edição na bateria final. Gates DJEN continuam desligados.
+
+> **DJEN — erro na atualização:** quando a consulta falha, a ficha alerta que a lista pode estar desatualizada e tenta reler o estado salvo do Worker; se a releitura também falhar, mantém a última visualização com o aviso. Validar erro de rede, 429, 502 e releitura malsucedida na bateria final com fixtures.
+
+> **Publicações DJEN — estados de falha:** a ficha distingue retorno com itens, resposta vazia, limite de consultas e erro de fonte; uma falha não é apresentada como retorno de zero itens, e o aviso de limite persiste ao carregar a ficha salva. Verificar estados e preservação do histórico na E2E final sintética; conector continua desligado.
+
+> **DJEN — paginação da busca por OAB:** a interface recusa avanço fora de sequência e avisa quando a contagem informada pela fonte muda entre páginas. Isso não garante ordenação nem cobertura; validar paginação, falhas e variação de contagem com fixtures sintéticas na bateria final, mantendo gates desligados.
+
+> **Busca DJEN por OAB:** resultados agora exibem aviso permanente de cobertura não confirmada; quando há outra página, a lista é identificada como incompleta. A fonte segue desativada até validação de schema/cobertura; verificar estados vazio, parcial e erro na bateria final.
+
+> **Arquivos — respostas concorrentes:** consultas de status dos Drives usam sequência por foco/tentativa: uma resposta antiga ou de tela desfocada não substitui a leitura mais recente. Enquanto aguarda, a interface volta a informar verificação. Exercitar respostas fora de ordem e troca de conta na bateria final.
+
+> **Arquivos — retorno das integrações:** o estado das conexões é recarregado ao focar a aba Arquivos e o estado anterior fica oculto enquanto a leitura ocorre; respostas de uma aba que perdeu foco são ignoradas. A seleção/rascunho de documento não é apagada. Validar retorno após conectar, desconectar e falha na bateria final.
+
+> **Arquivos e conexões:** a escolha de origem agora indica atualização ou necessidade de reconexão para cada Drive, com botão para atualizar estado pendente; também corrige o caminho indicado para as configurações, que ficam em Processos. Verificar transições, atualização e seleção preservada na bateria final.
+
+> **Estado de renovação Drive:** configurações agora recebem estado da guarda por escritório/provedor e mostram atualização em andamento ou botão de reconexão quando incerta. O estado não expõe token. Revisar acessibilidade e validar Worker/D1, contrato, concorrência e reconexão sintética nos testes finais; OAuth real permanece desligado.
+
+> **Preparação da E2E final:** a jornada Web foi ajustada para a orientação atual de desconexão Google e confirmação de descarte financeiro. A suíte não foi executada; ainda precisa de cenários completos de concorrência OAuth e de proteção de rascunhos antes do fechamento.
+
+> **Desconexão Google:** a exclusão local da conexão e dos tokens continua; a revogação automática remota foi suspensa porque uma reconexão simultânea poderia ser afetada pela chamada tardia ao Google. A interface orienta remover a autorização na Conta Google e não afirma revogação remota. Implementar coordenação robusta antes de reativar revogação automática; atualizar os testes sintéticos antigos que esperavam revogação. OAuth real segue desligado.
+
+> **OAuth — gravação da renovação:** atualização cifrada, auditoria e remoção da guarda agora ocorrem no mesmo batch D1; a guarda só é removida após auditoria bem-sucedida. Permanece pendente revisar revogação Google concorrente com reconexão e executar os cenários sintéticos de falha e concorrência antes de habilitar OAuth real.
+
+> **OAuth — reconexão concorrente:** quando o provedor não devolve refresh token novo, a gravação que reutilizaria o token anterior agora exige atomicamente que não exista guarda de refresh e que ciphertext/IV continuem iguais aos lidos. Se outra renovação ou desconexão ocorrer, a reconexão falha sem restaurar esse token antigo. Falta validar migração e interleavings sintéticos na rodada final; OAuth real continua desligado.
+
+> **Drive — orientação ao renovar:** guarda recente retorna estado de renovação em andamento; guarda persistente retorna orientação para reconectar. Os três endpoints de seleção/importação propagam estados distintos e o app mostra mensagens apropriadas. O prazo de 30 segundos apenas escolhe a mensagem, não expira nem remove a guarda. Revisão de concorrência, relógio, desconexão/reconexão e testes sintéticos seguem obrigatórios antes de ligar OAuth; nenhum teste foi executado nesta alteração.
+
+> **Drive — coordenação inicial implementada:** migration `0029` cria guarda D1 por tenant/provedor antes de chamar refresh; concorrentes não chamam o provedor e gravação exige a mesma tentativa e versão. Resultado incerto mantém a guarda até reconexão ou desconexão, evitando retry automático de token possivelmente rotacionado; reconexão sob guarda exige novo refresh token. Isto é fail-closed e pode exigir reconexão mesmo por erro transitório. Ainda faltam mensagem específica na UI, análise de corridas com reconexão/revogação e validação sintética com migrations e chamadas concorrentes; não ativar OAuth real. Não foram executados testes, conforme pedido de concentrá-los ao final.
+
+> **Drive — auditoria de renovação concorrente:** a atualização D1 usa compare-and-swap, mas duas requisições ainda podem enviar o mesmo refresh token ao provedor antes da gravação. Quando há rotação de token, a perda da resposta ou uma corrida pode exigir reconexão; compare-and-swap sozinho não prova renovação segura. Antes de habilitar OAuth real, projetar exclusão mútua distribuída por tenant/provedor, expiração/recuperação de lease, interação com desconexão e reconexão e resposta explícita para renovação em curso. Exercitar rotação, perda de resposta, falhas e requisições simultâneas com provedor sintético na bateria final; manter o gate desligado.
+
+> **Saída do conteúdo social:** a tela usa `usePreventRemove` do Expo Router para pedir confirmação ao sair com alterações e bloquear saída durante salvamento; cobre ações de navegação tratadas pelo stack e a proteção de unload oferecida pelo hook na Web. Confirmação permite continuar editando ou descartar e repetir a navegação. A validação Web/Android, incluindo botão físico e reload, está reservada para a bateria final.
+
 > **Conteúdo social:** abrir outro rascunho, iniciar outro ou substituir texto pela estrutura agora pede confirmação quando há texto/alterações em risco. O mesmo rascunho não é recarregado sobre si próprio. Validar salvamento, conflitos, confirmação e navegação Web/Android na etapa final; a saída da tela ainda requer revisão própria para proteção de rascunho não salvo.
 
 > **Consultas jurídicas salvas:** edição em andamento agora impede troca de consulta, arquivamento e troca de lista até salvar ou confirmar descarte. Cancelamento pede confirmação e preserva a edição se a pessoa continuar. Validar cenários, concorrência e acessibilidade na bateria final; ainda não executada.

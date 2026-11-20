@@ -296,6 +296,8 @@ export const CourtPublicationsResponseSchema = z.object({
   sourceUrl: z.string().url(),
   sync: CourtPublicationSyncSchema,
   items: z.array(CourtPublicationSchema).max(100),
+  hasMoreSaved: z.boolean().optional(),
+  nextCursor: z.string().max(1024).nullable().optional(),
 }).strict();
 
 export const DjenDiscoveryPageLimit = 10;
@@ -504,6 +506,7 @@ export const IntegrationProviderSettingsSchema = z.object({
   clientSecretConfigured: z.boolean(),
   updatedAt: TimestampSchema.nullable(),
   connectionStatus: z.enum(["not_connected", "connected"]),
+  refreshState: z.enum(["idle", "pending", "uncertain"]).optional(),
   connectedAccountLabel: z.string().trim().max(320).nullable(),
   connectedAt: TimestampSchema.nullable(),
   grantedScopes: z.array(z.string().trim().min(1).max(256)).max(16),
