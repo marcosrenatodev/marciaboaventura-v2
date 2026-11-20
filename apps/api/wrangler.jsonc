@@ -1,0 +1,49 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "marcia-api-local-scaffold",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-16",
+  "compatibility_flags": ["nodejs_compat"],
+  // Somente desenvolvimento local. Não há ambiente de staging/produção.
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [],
+  "send_metrics": false,
+  "logpush": false,
+  "observability": {
+    "enabled": false
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "marcia-scaffold-local-only",
+      // Placeholder deliberadamente inválido para D1 remoto. Não é um UUID.
+      // Não remover: a ausência de ID pode habilitar provisionamento automático.
+      "database_id": "LOCAL_ONLY_NOT_A_DEPLOYABLE_DATABASE_ID",
+      "migrations_dir": "migrations",
+      "remote": false
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "DOCUMENTS",
+      "bucket_name": "marcia-private-documents-local",
+      "remote": false
+    },
+    {
+      "binding": "BACKUP_DOCUMENTS",
+      "bucket_name": "marcia-private-documents-backup-local",
+      "remote": false
+    }
+  ],
+  "send_email": [
+    { "name": "EMAIL" }
+  ],
+  "vars": {
+    // Local Wrangler simulation only; production requires a verified sender domain and paid plan.
+    "AUTH_EMAIL_FROM": "nao-responda@example.com",
+    "PASSWORD_RESET_ENABLED": "true",
+    // Use "maintenance" to return 503 before any API request reaches D1/R2.
+    "SERVICE_MODE": "normal"
+  }
+}

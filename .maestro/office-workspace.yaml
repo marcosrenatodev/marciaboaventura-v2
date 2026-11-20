@@ -1,0 +1,728 @@
+appId: ${APP_ID}
+---
+- tapOn:
+    text: "Wait"
+    optional: true
+- tapOn:
+    text: "Continue"
+    optional: true
+- tapOn:
+    text: "Close"
+    optional: true
+- tapOn:
+    text: "Wait"
+    optional: true
+- repeat:
+    times: 4
+    commands:
+      - runFlow:
+          when:
+            visible: "Open"
+          commands:
+            - tapOn: "Open"
+      - waitForAnimationToEnd:
+          timeout: 1000
+- extendedWaitUntil:
+    visible:
+      text: "Bem-vinda"
+    timeout: 60000
+- tapOn: "Entrar com e-mail"
+- tapOn: "E-mail"
+- inputText: "marcia-e2e@example.test"
+- tapOn: "Senha"
+- inputText: "${E2E_PASSWORD}"
+- hideKeyboard
+- tapOn:
+    id: "auth-login-submit"
+- assertVisible: "Seu espaço"
+- assertVisible: "Escritório conectado"
+- assertVisible: "ETAPA 1 DE 6"
+- assertVisible: "Comece pelo que pede atenção e veja tarefas e compromissos próximos."
+- tapOn: "Próxima tela"
+- assertVisible: "ETAPA 2 DE 6"
+- tapOn: "Voltar"
+- assertVisible: "ETAPA 1 DE 6"
+- tapOn: "Próxima tela"
+- assertVisible: "ETAPA 2 DE 6"
+- tapOn: "Fechar e continuar depois"
+- assertNotVisible: "ETAPA 2 DE 6"
+- tapOn:
+    id: "guided-tour-help"
+- assertVisible: "ETAPA 2 DE 6"
+- tapOn: "Pular tour"
+- assertNotVisible: "ETAPA 2 DE 6"
+- tapOn: "Agenda"
+- assertVisible: "AJUDA DESTA TELA"
+- assertVisible: "Planeje tarefas e compromissos em lista ou calendário."
+- tapOn: "Fechar guia"
+- assertNotVisible: "AJUDA DESTA TELA"
+- tapOn: "Hoje"
+- tapOn: "Agenda"
+- assertNotVisible: "AJUDA DESTA TELA"
+- tapOn: "Ajuda"
+- assertVisible: "AJUDA DESTA TELA"
+- tapOn: "Ver tour completo"
+- assertVisible: "ETAPA 1 DE 6"
+- tapOn: "Pular tour"
+- assertNotVisible: "ETAPA 1 DE 6"
+- tapOn: "Processos"
+- tapOn: "Configurações de integrações"
+- assertVisible: "Integrações"
+- scrollUntilVisible:
+    element:
+      id: "integration-google-picker-key"
+    direction: DOWN
+- tapOn:
+    id: "integration-google-picker-key"
+- inputText: "fake-picker-key-native-e2e"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "integration-google-client-id"
+    direction: DOWN
+- tapOn:
+    id: "integration-google-client-id"
+- inputText: "google-client-native-e2e.apps.example.test"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "integration-google-client-secret"
+    direction: DOWN
+- tapOn:
+    id: "integration-google-client-secret"
+- inputText: "fake-google-secret-native-e2e"
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Salvar configuração Google"
+    direction: DOWN
+- tapOn: "Salvar configuração Google"
+- scrollUntilVisible:
+    element:
+      id: "integration-google-save-status"
+    direction: DOWN
+- assertVisible: "Credenciais salvas cifradas no servidor. Nenhum segredo foi devolvido ao app."
+- swipe:
+    start: "90%, 25%"
+    end: "90%, 65%"
+- swipe:
+    start: "90%, 25%"
+    end: "90%, 65%"
+- swipe:
+    start: "90%, 25%"
+    end: "90%, 65%"
+- tapOn: "Voltar para assuntos e processos"
+- tapOn:
+    id: "process-collection-clients"
+- tapOn: "Novo cliente"
+- assertVisible: "Novo cliente"
+- scrollUntilVisible:
+    element:
+      id: "client-name-input"
+    direction: DOWN
+- tapOn:
+    id: "client-name-input"
+- inputText: "E2E Client Test"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "client-email-input"
+    direction: DOWN
+- tapOn:
+    id: "client-email-input"
+- inputText: "cliente-e2e@example.test"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "client-phone-input"
+    direction: DOWN
+- tapOn:
+    id: "client-phone-input"
+- inputText: "41999990000"
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Cadastrar cliente"
+    direction: DOWN
+- tapOn: "Cadastrar cliente"
+- assertVisible: "Cliente cadastrado."
+- scrollUntilVisible:
+    element: "Editar cliente: E2E Client Test"
+    direction: DOWN
+- tapOn: "Editar cliente: E2E Client Test"
+- assertVisible: "Editar cliente"
+- scrollUntilVisible:
+    element:
+      id: "client-name-input"
+    direction: DOWN
+- tapOn:
+    id: "client-name-input"
+- eraseText: 60
+- inputText: "E2E Client Revised"
+- assertVisible: "E2E Client Revised"
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Salvar alterações do cliente"
+    direction: DOWN
+- tapOn: "Salvar alterações do cliente"
+- scrollUntilVisible:
+    element: "Editar cliente: E2E Client Revised"
+    direction: DOWN
+- assertVisible: "Alterações do cliente salvas."
+- assertVisible: "Editar cliente: E2E Client Revised"
+- swipe:
+    start: "90%, 25%"
+    end: "90%, 65%"
+- swipe:
+    start: "90%, 25%"
+    end: "90%, 65%"
+- swipe:
+    start: "90%, 25%"
+    end: "90%, 65%"
+- tapOn:
+    id: "process-collection-matters"
+- tapOn: "Novo assunto"
+- assertVisible: "Novo assunto"
+- scrollUntilVisible:
+    element:
+      id: "matter-name-input"
+    direction: DOWN
+- tapOn:
+    id: "matter-name-input"
+- inputText: "E2E Example Matter"
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Selecionar cliente: E2E Client Revised"
+    direction: DOWN
+- tapOn: "Selecionar cliente: E2E Client Revised"
+- scrollUntilVisible:
+    element: "Cadastrar assunto"
+    direction: DOWN
+- swipe:
+    start: "90%, 75%"
+    end: "90%, 25%"
+- tapOn: "Cadastrar assunto"
+- assertVisible: "Assunto cadastrado pela API."
+- assertVisible: "Cliente: E2E Client Revised"
+- swipe:
+    start: "90%, 25%"
+    end: "90%, 65%"
+- swipe:
+    start: "90%, 25%"
+    end: "90%, 65%"
+- swipe:
+    start: "90%, 25%"
+    end: "90%, 65%"
+- tapOn:
+    id: "process-collection-courtCases"
+- scrollUntilVisible:
+    element: "Novo processo"
+    direction: UP
+- tapOn: "Novo processo"
+- assertVisible: "Novo processo"
+- scrollUntilVisible:
+    element:
+      id: "court-picker-trigger"
+    direction: DOWN
+- tapOn:
+    id: "court-picker-trigger"
+- scrollUntilVisible:
+    element:
+      id: "court-option-TJPR"
+    direction: DOWN
+- tapOn:
+    id: "court-option-TJPR"
+- scrollUntilVisible:
+    element:
+      id: "court-number-input"
+    direction: DOWN
+- tapOn:
+    id: "court-number-input"
+- inputText: "0000000-04.9999.8.16.0001"
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Selecionar assunto: E2E Example Matter"
+    direction: DOWN
+- tapOn: "Selecionar assunto: E2E Example Matter"
+- scrollUntilVisible:
+    element: "Cadastrar processo"
+    direction: DOWN
+- tapOn: "Cadastrar processo"
+- assertVisible: "Número do processo: 0000000-04.9999.8.16.0001"
+- assertVisible: "Assunto: E2E Example Matter"
+- assertVisible: "Cadastro manual. Nenhum tribunal foi consultado."
+- scrollUntilVisible:
+    element: "Anotações e contatos: 0000000-04.9999.8.16.0001"
+    direction: DOWN
+- tapOn: "Anotações e contatos: 0000000-04.9999.8.16.0001"
+- tapOn: "Nova anotação interna do processo"
+- inputText: "E2E Internal Note"
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Adicionar anotação ao histórico"
+    direction: DOWN
+- tapOn: "Adicionar anotação ao histórico"
+- scrollUntilVisible:
+    element: "Anotação salva no histórico do processo."
+    direction: DOWN
+- assertVisible: "Anotação salva no histórico do processo."
+- assertVisible: "E2E Internal Note"
+- scrollUntilVisible:
+    element: "Acompanhamento de publicações do DJEN: 0000000-04.9999.8.16.0001"
+    direction: DOWN
+- tapOn: "Acompanhamento de publicações do DJEN: 0000000-04.9999.8.16.0001"
+- scrollUntilVisible:
+    element: "Consultar publicações agora"
+    direction: DOWN
+- tapOn: "Consultar publicações agora"
+- scrollUntilVisible:
+    element: "Comunicado sintético para teste"
+    direction: DOWN
+- assertVisible: "Comunicado sintético para teste"
+- assertVisible: "Pendente de conferência interna"
+- scrollUntilVisible:
+    element: "Marcar publicação como conferida"
+    direction: DOWN
+- tapOn: "Marcar publicação como conferida"
+- assertVisible: "Revisão interna concluída"
+- scrollUntilVisible:
+    element: "Marcada como conferida internamente. Isso não confirma ciência nem prazo processual."
+    direction: DOWN
+- assertVisible: "Marcada como conferida internamente. Isso não confirma ciência nem prazo processual."
+- scrollUntilVisible:
+    element: "Voltar para pendentes de conferência"
+    direction: UP
+- tapOn: "Voltar para pendentes de conferência"
+- assertVisible: "Pendente de conferência interna"
+- tapOn: "Agenda"
+- assertVisible: "Agenda e tarefas"
+- tapOn:
+    id: "agenda-view-calendar"
+- assertVisible: "Calendário mensal"
+- tapOn: "Mês anterior"
+- tapOn: "Mês seguinte"
+- tapOn: "Voltar para hoje"
+- tapOn:
+    id: "agenda-view-tasks"
+- assertVisible: "Tarefas selecionadas"
+- tapOn:
+    id: "agenda-new-entry"
+- assertVisible: "Nova tarefa"
+- tapOn:
+    id: "agenda-task-title-input"
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertVisible:
+    id: "agenda-task-title-input"
+- inputText: "E2E Next Task"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "agenda-task-date-input"
+    direction: DOWN
+- tapOn:
+    id: "agenda-task-date-input"
+- inputText: "19/12/2026"
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Selecionar assunto: E2E Example Matter"
+    direction: DOWN
+- tapOn: "Selecionar assunto: E2E Example Matter"
+- scrollUntilVisible:
+    element: "Cadastrar tarefa"
+    direction: DOWN
+- tapOn: "Cadastrar tarefa"
+- assertVisible: "Tarefa cadastrada na API."
+- scrollUntilVisible:
+    element: "Assunto: E2E Example Matter"
+    direction: DOWN
+- assertVisible: "Assunto da tarefa E2E Next Task: E2E Example Matter"
+- tapOn: "Hoje"
+- assertVisible: "Seu espaço"
+- assertVisible: "1 tarefa em aberto"
+- tapOn: "Agenda"
+- assertVisible: "Tarefas cadastradas"
+- tapOn:
+    id: "agenda-view-calendar"
+- assertVisible: "Calendário mensal"
+- tapOn:
+    id: "agenda-new-entry"
+- assertVisible: "Novo compromisso"
+- tapOn:
+    id: "agenda-appointment-title-input"
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertVisible:
+    id: "agenda-appointment-title-input"
+- inputText: "E2E Meeting Test"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "agenda-appointment-date-input"
+    direction: DOWN
+- tapOn:
+    id: "agenda-appointment-date-input"
+- inputText: "04/12/2026"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "agenda-appointment-start-input"
+    direction: DOWN
+- tapOn:
+    id: "agenda-appointment-start-input"
+- inputText: "14:00"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "agenda-appointment-end-input"
+    direction: DOWN
+- tapOn:
+    id: "agenda-appointment-end-input"
+- inputText: "15:00"
+- hideKeyboard
+- tapOn: "Cadastrar compromisso"
+- assertVisible: "Compromisso cadastrado no escritório."
+- tapOn:
+    id: "agenda-view-tasks"
+- assertVisible: "Tarefas selecionadas"
+- scrollUntilVisible:
+    element: "Editar tarefa: E2E Next Task"
+    direction: DOWN
+- tapOn: "Editar tarefa: E2E Next Task"
+- assertVisible: "Editar tarefa"
+- scrollUntilVisible:
+    element:
+      id: "agenda-task-title-input"
+    direction: DOWN
+- scrollUntilVisible:
+    element: "Remover vínculo com assunto"
+    direction: DOWN
+- tapOn: "Remover vínculo com assunto"
+- scrollUntilVisible:
+    element:
+      id: "agenda-task-title-input"
+    direction: UP
+- tapOn:
+    id: "agenda-task-title-input"
+- eraseText: 60
+- inputText: "E2E Next Task Revised"
+- scrollUntilVisible:
+    element:
+      id: "agenda-task-date-input"
+    direction: DOWN
+- tapOn:
+    id: "agenda-task-date-input"
+- eraseText: 10
+- inputText: "20/12/2026"
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Salvar alterações da tarefa"
+    direction: DOWN
+- tapOn: "Salvar alterações da tarefa"
+- scrollUntilVisible:
+    element: "Alterações da tarefa salvas."
+    direction: UP
+- assertVisible: "Alterações da tarefa salvas."
+- scrollUntilVisible:
+    element: "E2E Next Task Revised"
+    direction: DOWN
+- assertVisible: "E2E Next Task Revised"
+- assertVisible: "Assunto da tarefa E2E Next Task Revised: Sem assunto vinculado"
+- scrollUntilVisible:
+    element: "Concluir tarefa: E2E Next Task Revised"
+    direction: DOWN
+- tapOn: "Concluir tarefa: E2E Next Task Revised"
+- assertVisible: "Status da tarefa E2E Next Task Revised: Concluída"
+- tapOn:
+    id: "agenda-view-calendar"
+- assertVisible: "Calendário mensal"
+- scrollUntilVisible:
+    element: "Editar compromisso: E2E Meeting Test"
+    direction: DOWN
+- tapOn: "Editar compromisso: E2E Meeting Test"
+- assertVisible: "Editar compromisso"
+- scrollUntilVisible:
+    element:
+      id: "agenda-appointment-title-input"
+    direction: DOWN
+- tapOn:
+    id: "agenda-appointment-title-input"
+- eraseText: 60
+- inputText: "E2E Meeting Revised"
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Salvar alterações do compromisso"
+    direction: DOWN
+- tapOn: "Salvar alterações do compromisso"
+- scrollUntilVisible:
+    element: "Alterações do compromisso salvas."
+    direction: UP
+- assertVisible: "Alterações do compromisso salvas."
+- scrollUntilVisible:
+    element: "Status do compromisso E2E Meeting Revised: Agendado"
+    direction: DOWN
+- assertVisible: "Status do compromisso E2E Meeting Revised: Agendado"
+- tapOn: "Financeiro"
+- assertVisible: "AJUDA DESTA TELA"
+- assertVisible: "Acompanhe honorários e despesas que você registrou."
+- tapOn: "Fechar guia"
+- assertNotVisible: "AJUDA DESTA TELA"
+- tapOn: "Novo lançamento"
+- assertVisible: "Tipo do lançamento"
+- tapOn: "Despesa"
+- tapOn: "Descrição do lançamento"
+- inputText: "E2E Expense Test"
+- swipe:
+    start: "90%, 60%"
+    end: "90%, 25%"
+- tapOn: "Valor em reais e centavos"
+- inputText: "125,50"
+- hideKeyboard
+- swipe:
+    start: "90%, 75%"
+    end: "90%, 30%"
+- tapOn: "Data de vencimento opcional no formato DD/MM/AAAA"
+- inputText: "01/01/2030"
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Categoria opcional do lançamento"
+    direction: DOWN
+- tapOn: "Categoria opcional do lançamento"
+- inputText: "Despesas operacionais"
+- hideKeyboard
+- swipe:
+    start: "90%, 75%"
+    end: "90%, 25%"
+- tapOn: "Cadastrar lançamento"
+- assertVisible: "E2E Expense Test"
+- assertVisible: "Categoria: Despesas operacionais"
+- assertVisible: "Vence em 01/01/2030"
+- scrollUntilVisible:
+    element: "Editar lançamento: E2E Expense Test"
+    direction: DOWN
+- tapOn: "Editar lançamento: E2E Expense Test"
+- tapOn: "Descrição do lançamento"
+- eraseText: 60
+- inputText: "E2E Expense Revised"
+- scrollUntilVisible:
+    element: "Categoria opcional do lançamento"
+    direction: DOWN
+# Maestro eraseText presses Backspace at the caret; place it at the end so an old suffix cannot survive.
+- tapOn:
+    text: "Categoria opcional do lançamento"
+    point: "95%,50%"
+- eraseText: 60
+- inputText: "Professional Services"
+- assertVisible: "Professional Services"
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Valor em reais e centavos"
+    direction: UP
+- tapOn: "Valor em reais e centavos"
+- eraseText: 20
+- inputText: "130,00"
+- hideKeyboard
+- tapOn: "Salvar alterações"
+- scrollUntilVisible:
+    element: "Alterações salvas."
+    direction: UP
+- assertVisible: "Alterações salvas."
+- scrollUntilVisible:
+    element: "E2E Expense Revised"
+    direction: DOWN
+- assertVisible: "E2E Expense Revised"
+- scrollUntilVisible:
+    element: "Categoria: Professional Services"
+    direction: DOWN
+- assertVisible: "Categoria: Professional Services"
+- scrollUntilVisible:
+    element: "Marcar como pago: E2E Expense Revised"
+    direction: DOWN
+- tapOn: "Marcar como pago: E2E Expense Revised"
+- scrollUntilVisible:
+    element: "Status do lançamento E2E Expense Revised: Pago"
+    direction: DOWN
+- assertVisible: "Status do lançamento E2E Expense Revised: Pago"
+- tapOn: "Pesquisa"
+- runFlow:
+    when:
+      visible: "AJUDA DESTA TELA"
+    commands:
+      - assertVisible: "Prepare uma busca jurídica e abra o portal oficial escolhido."
+      - tapOn: "Fechar guia"
+- assertNotVisible: "AJUDA DESTA TELA"
+- tapOn: "Questão jurídica para pesquisar"
+- inputText: "responsabilidade civil falha servico"
+- hideKeyboard
+- swipe:
+    start: "90%, 75%"
+    end: "90%, 35%"
+- tapOn: "TRF4"
+- swipe:
+    start: "90%, 75%"
+    end: "90%, 35%"
+- tapOn: "Salvar busca no escritório"
+- scrollUntilVisible:
+    element: "responsabilidade civil falha servico"
+    direction: DOWN
+- assertVisible: "responsabilidade civil falha servico"
+- tapOn: "Hoje"
+- scrollUntilVisible:
+    element: "Criar rascunho para redes sociais"
+    direction: DOWN
+- tapOn: "Criar rascunho para redes sociais"
+- assertVisible: "Conteúdo para compartilhar"
+- tapOn: "TikTok"
+- tapOn: "Tema informativo"
+- inputText: "E2E Informational Topic"
+- tapOn: "Texto do rascunho"
+- inputText: "Synthetic draft text without case or client data."
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Salvar rascunho"
+    direction: DOWN
+- tapOn: "Salvar rascunho"
+- assertVisible: "Rascunho salvo no escritório. Nenhuma rede social foi acessada."
+- scrollUntilVisible:
+    element: "Texto do rascunho"
+    direction: UP
+- tapOn: "Texto do rascunho"
+- eraseText: 100
+- inputText: "Revised synthetic text without case or client data."
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Salvar alterações"
+    direction: DOWN
+- tapOn: "Salvar alterações"
+- scrollUntilVisible:
+    element: "Rascunho atualizado no escritório."
+    direction: UP
+- assertVisible: "Rascunho atualizado no escritório."
+- tapOn: "Voltar ao escritório"
+- tapOn: "Processos"
+- swipe:
+    start: "90%, 25%"
+    end: "90%, 65%"
+- swipe:
+    start: "90%, 25%"
+    end: "90%, 65%"
+- swipe:
+    start: "90%, 25%"
+    end: "90%, 65%"
+- tapOn:
+    id: "process-collection-matters"
+- scrollUntilVisible:
+    element: "Arquivar assunto: E2E Example Matter"
+    direction: DOWN
+- tapOn: "Arquivar assunto: E2E Example Matter"
+- assertVisible: "O assunto ficará arquivado. O histórico e as tarefas vinculadas continuarão visíveis. Confirma?"
+- tapOn: "Cancelar arquivamento do assunto"
+- tapOn: "Arquivar assunto: E2E Example Matter"
+- tapOn: "Confirmar arquivamento do assunto: E2E Example Matter"
+- scrollUntilVisible:
+    element: "Assunto arquivado: E2E Example Matter."
+    direction: DOWN
+- assertVisible: "Assunto arquivado: E2E Example Matter."
+- scrollUntilVisible:
+    element: "Reativar assunto: E2E Example Matter"
+    direction: UP
+- tapOn: "Reativar assunto: E2E Example Matter"
+- scrollUntilVisible:
+    element: "Assunto reativado: E2E Example Matter."
+    direction: DOWN
+- assertVisible: "Assunto reativado: E2E Example Matter."
+- scrollUntilVisible:
+    element: "Arquivar processo: Tribunal de Justiça do Paraná"
+    direction: DOWN
+- tapOn: "Arquivar processo: Tribunal de Justiça do Paraná"
+- assertVisible: "O processo ficará arquivado e continuará disponível no histórico. Confirma?"
+- tapOn: "Confirmar arquivamento do processo: Tribunal de Justiça do Paraná"
+- scrollUntilVisible:
+    element: "Processo arquivado: Tribunal de Justiça do Paraná."
+    direction: DOWN
+- assertVisible: "Processo arquivado: Tribunal de Justiça do Paraná."
+- scrollUntilVisible:
+    element: "Reativar processo: Tribunal de Justiça do Paraná"
+    direction: UP
+- tapOn: "Reativar processo: Tribunal de Justiça do Paraná"
+- scrollUntilVisible:
+    element: "Processo reativado: Tribunal de Justiça do Paraná."
+    direction: DOWN
+- assertVisible: "Processo reativado: Tribunal de Justiça do Paraná."
+- swipe:
+    start: "90%, 25%"
+    end: "90%, 65%"
+- swipe:
+    start: "90%, 25%"
+    end: "90%, 65%"
+- swipe:
+    start: "90%, 25%"
+    end: "90%, 65%"
+- tapOn:
+    id: "process-collection-courtCases"
+- tapOn: "Arquivos"
+- runFlow:
+    when:
+      visible: "AJUDA DESTA TELA"
+    commands:
+      - assertVisible: "Guarde PDFs e importe arquivos que você selecionar do Drive conectado."
+      - tapOn: "Fechar guia"
+- assertNotVisible: "AJUDA DESTA TELA"
+- scrollUntilVisible:
+    element: "Fixture E2E — documento sintético.pdf"
+    direction: DOWN
+- assertVisible: "Fixture E2E — documento sintético.pdf"
+- scrollUntilVisible:
+    element: "Assinar eletronicamente: Fixture E2E — documento sintético.pdf"
+    direction: DOWN
+- tapOn: "Assinar eletronicamente: Fixture E2E — documento sintético.pdf"
+- assertVisible: "Assinatura eletrônica simples"
+- tapOn: "Digite seu nome como aparece na conta do escritório"
+- inputText: "Marcia E2E Ficticia"
+- hideKeyboard
+- tapOn: "Li a declaração e quero assinar esta versão do PDF eletronicamente."
+- scrollUntilVisible:
+    element: "Confirmar assinatura"
+    direction: DOWN
+- tapOn: "Confirmar assinatura"
+- assertVisible: "Assinatura eletrônica registrada. O comprovante está vinculado ao hash do PDF."
+- scrollUntilVisible:
+    element: "Baixar / compartilhar comprovante: Fixture E2E — documento sintético.pdf"
+    direction: DOWN
+- tapOn: "Baixar / compartilhar comprovante: Fixture E2E — documento sintético.pdf"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: "50%, 28%"
+          end: "50%, 95%"
+- assertVisible: "Recibo exportado. Ele inclui dados da conta; compartilhe somente com quem deve receber."
+- tapOn: "Sair"
+- assertVisible: "Bem-vinda"
+- tapOn: "Entrar com e-mail"
+- tapOn: "E-mail"
+- inputText: "marcia-e2e@example.test"
+- tapOn: "Senha"
+- inputText: "${E2E_PASSWORD}"
+- hideKeyboard
+- tapOn:
+    id: "auth-login-submit"
+- assertVisible: "Seu espaço"
+- tapOn: "Configurações de segurança da conta"
+- assertVisible: "Segurança da conta"
+- scrollUntilVisible:
+    element: "Preparar exportação"
+    direction: DOWN
+- tapOn: "Preparar exportação"
+- assertVisible: "Confirme que está usando um dispositivo confiável e que vai guardar este arquivo em local privado."
+- tapOn: "Exportar arquivo JSON"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- assertVisible: "Arquivo exportado. Ele contém informações confidenciais; guarde em local privado e compartilhe apenas com pessoas autorizadas."

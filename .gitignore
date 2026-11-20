@@ -11,6 +11,13 @@ node_modules
 dist
 dist-ssr
 *.local
+/djen-response.observed.schema.json
+test-results/
+playwright-report/
+.local/usability-sessions/
+.local/backup-drills/
+.local/e2e-web-build/
+apps/api/.wrangler-maintenance-e2e-*.jsonc
 
 # Editor directories and files
 .vscode/*

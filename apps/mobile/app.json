@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Márcia · Demonstração",
+    "slug": "marcia-escritorio-demo",
+    "version": "0.1.0",
+    "scheme": "marcia-demo",
+    "orientation": "default",
+    "platforms": [
+      "android",
+      "ios",
+      "web"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.marciaescritorio.demo"
+    },
+    "android": {
+      "package": "com.example.marciaescritorio.demo",
+      "softwareKeyboardLayoutMode": "resize"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
