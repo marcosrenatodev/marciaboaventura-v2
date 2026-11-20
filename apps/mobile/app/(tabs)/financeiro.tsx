@@ -190,6 +190,10 @@ export default function FinanceScreen() {
             <Text accessibilityLabel="Total de despesas previstas" style={styles.amount}>{formatMoney(sumCents(expensePlanned))}</Text>
           </View>
         </View> : null}
+        {api.sessionInfo && !api.issue && !api.loading ? (() => {
+          const overdue = api.financialEntries.filter((entry) => entry.status === "planned" && entry.dueOn && entry.dueOn < today).length;
+          return overdue > 0 ? <Text accessibilityLiveRegion="polite" style={styles.badge}>{overdue === 1 ? "1 lançamento vencido" : `${overdue} lançamentos vencidos`} · confira primeiro</Text> : <Text style={styles.small}>Nenhum lançamento vencido.</Text>;
+        })() : null}
         <Text style={styles.small}>Totais excluem lançamentos recebidos, pagos ou cancelados. Sem integração bancária ou conciliação.</Text>
       </Card>
       {entryForm}
@@ -199,9 +203,10 @@ export default function FinanceScreen() {
         {api.loading ? <Text accessibilityLiveRegion="polite" style={styles.small}>Carregando lançamentos…</Text> : null}
         {api.issue ? <View style={styles.tight}><Text accessibilityLiveRegion="assertive" style={styles.text}>{api.issue}</Text><ActionButton label="Tentar novamente" secondary onPress={() => void api.refresh()} /></View> : null}
         {api.sessionInfo && !api.loading && !api.issue && searchedEntries.length === 0 ? <Text style={styles.text}>{searchQuery ? "Nenhum lançamento corresponde à busca." : "Ainda não há lançamentos."}</Text> : null}
-        {api.sessionInfo && !api.issue && searchedEntries.map((entry) => <View key={entry.id} testID="financial-entry-row" style={styles.tight}>
+        {api.sessionInfo && !api.issue && [...searchedEntries].sort((x, y) => (x.status === "planned" ? 0 : 1) - (y.status === "planned" ? 0 : 1) || (x.dueOn ?? "9999").localeCompare(y.dueOn ?? "9999")).map((entry) => <View key={entry.id} testID="financial-entry-row" style={styles.tight}>
           <Text style={styles.strong}>{entry.description}</Text>
-          <Text style={styles.text}>{entry.kind === "expense" ? "Despesa" : "Receita"} · {formatMoney(entry.amountCents)}</Text>
+          <Text style={styles.amount}>{formatMoney(entry.amountCents)}</Text>
+          <Text style={styles.text}>{entry.kind === "expense" ? "Despesa" : "Receita"}</Text>
           {entry.category ? <Text style={styles.small}>Categoria: {entry.category}</Text> : null}
           <Text accessibilityLabel={`Status do lançamento ${entry.description}: ${entry.status === "paid" ? (entry.kind === "income" ? "Recebido" : "Pago") : entry.status === "cancelled" ? "Cancelado" : "Previsto"}`}
             style={styles.small}>{entry.status === "paid" ? (entry.kind === "income" ? "Recebido" : "Pago") : entry.status === "cancelled" ? "Cancelado" : "Previsto"}</Text>

@@ -85,42 +85,11 @@ export default function TodayScreen() {
       {api.loading ? <Card><Text accessibilityLiveRegion="polite" style={styles.text}>Carregando dados do escritório…</Text></Card> : null}
       {api.issue ? <Card><Heading>Conexão pendente</Heading><Text accessibilityLiveRegion="assertive" style={styles.text}>{api.issue}</Text><ActionButton label="Tentar novamente" secondary onPress={() => void api.refresh()} /></Card> : null}
       {api.sessionInfo && !api.issue ? <>
-        <Card>
-          <Heading>Buscar no escritório</Heading>
-          <Text style={styles.small}>Clientes, assuntos, processos, tarefas, compromissos e financeiro.</Text>
-          <TourAnchor id="today.workspace-search">
-            <AccessibleTextInput accessibilityLabel="Buscar clientes, assuntos, processos, tarefas, compromissos ou lançamentos financeiros"
-              placeholder="Nome, processo ou palavra-chave" placeholderTextColor={colors.muted}
-              value={workspaceSearch} onChangeText={setWorkspaceSearch} autoCorrect={false} autoComplete="off" returnKeyType="search" maxLength={120} style={styles.input} />
-          </TourAnchor>
-          {workspaceSearch.trim().length > 0 && workspaceSearch.trim().length < 2 ? <Text style={styles.small}>Digite pelo menos duas letras.</Text> : null}
-          {normalizedQuery.length >= 2 && matches.length === 0 ? <Text style={styles.text}>Nenhum resultado nos registros carregados.</Text> : null}
-          {matches.map((match) => <View key={match.id} style={styles.tight}>
-            <Text style={styles.eyebrow}>{match.kind}</Text>
-            <Text style={styles.strong}>{match.title}</Text>
-            {match.detail ? <Text style={styles.small}>{match.detail}</Text> : null}
-            <ActionButton label={`Abrir ${match.kind.toLocaleLowerCase("pt-BR")}: ${match.title}`} secondary onPress={match.open} />
-          </View>)}
-          {api.courtCasesNextCursor ? <Text style={styles.small}>Há mais processos para carregar. A busca inclui apenas os processos já carregados; abra Processos e use “Carregar mais processos” para ampliar a busca.</Text> : null}
-        </Card>
         <Card style={styles.priority}>
           <Text style={styles.eyebrow}>PRÓXIMAS AÇÕES</Text>
           <Heading>{formatOpenTaskCount(openTaskCount)}</Heading>
           <Text style={styles.small}>Tarefas organizam o trabalho. Nenhuma delas confirma prazo processual.</Text>
           <ActionButton label="Abrir tarefas" secondary onPress={() => router.push("/agenda")} />
-        </Card>
-        <Card testID="today-quick-actions">
-          <Heading>Ações rápidas</Heading>
-          <Text style={styles.small}>Toque para abrir o campo certo e começar um registro.</Text>
-          <View style={width >= 640 ? styles.columns : styles.stack}>
-            <View style={styles.flexible}>
-              <ActionButton label="Novo processo" accessibilityHint="Abre o cadastro de processo e posiciona o cursor no campo do tribunal." secondary onPress={() => router.push({ pathname: "/processos", params: { quick: "case" } })} />
-            </View>
-            <View style={styles.flexible}>
-              <ActionButton label="Registrar receita" accessibilityHint="Abre o financeiro e prepara um lançamento de receita." secondary onPress={() => router.push({ pathname: "/financeiro", params: { quick: "income" } })} />
-              <ActionButton label="Lançar despesa" accessibilityHint="Abre o financeiro e prepara um lançamento de despesa." secondary onPress={() => router.push({ pathname: "/financeiro", params: { quick: "expense" } })} />
-            </View>
-          </View>
         </Card>
         <Card>
           <Heading>Compromissos de hoje</Heading>
@@ -154,6 +123,37 @@ export default function TodayScreen() {
             <ActionButton label="Ver financeiro" secondary onPress={() => router.push("/financeiro")} />
           </Card>
         </View>
+        <Card testID="today-quick-actions">
+          <Heading>Ações rápidas</Heading>
+          <Text style={styles.small}>Toque para abrir o campo certo e começar um registro.</Text>
+          <View style={width >= 640 ? styles.columns : styles.stack}>
+            <View style={styles.flexible}>
+              <ActionButton label="Novo processo" accessibilityHint="Abre o cadastro de processo e posiciona o cursor no campo do tribunal." secondary onPress={() => router.push({ pathname: "/processos", params: { quick: "case" } })} />
+            </View>
+            <View style={styles.flexible}>
+              <ActionButton label="Registrar receita" accessibilityHint="Abre o financeiro e prepara um lançamento de receita." secondary onPress={() => router.push({ pathname: "/financeiro", params: { quick: "income" } })} />
+              <ActionButton label="Lançar despesa" accessibilityHint="Abre o financeiro e prepara um lançamento de despesa." secondary onPress={() => router.push({ pathname: "/financeiro", params: { quick: "expense" } })} />
+            </View>
+          </View>
+        </Card>
+        <Card>
+          <Heading>Buscar no escritório</Heading>
+          <Text style={styles.small}>Clientes, assuntos, processos, tarefas, compromissos e financeiro.</Text>
+          <TourAnchor id="today.workspace-search">
+            <AccessibleTextInput accessibilityLabel="Buscar clientes, assuntos, processos, tarefas, compromissos ou lançamentos financeiros"
+              placeholder="Nome, processo ou palavra-chave" placeholderTextColor={colors.muted}
+              value={workspaceSearch} onChangeText={setWorkspaceSearch} autoCorrect={false} autoComplete="off" returnKeyType="search" maxLength={120} style={styles.input} />
+          </TourAnchor>
+          {workspaceSearch.trim().length > 0 && workspaceSearch.trim().length < 2 ? <Text style={styles.small}>Digite pelo menos duas letras.</Text> : null}
+          {normalizedQuery.length >= 2 && matches.length === 0 ? <Text style={styles.text}>Nenhum resultado nos registros carregados.</Text> : null}
+          {matches.map((match) => <View key={match.id} style={styles.tight}>
+            <Text style={styles.eyebrow}>{match.kind}</Text>
+            <Text style={styles.strong}>{match.title}</Text>
+            {match.detail ? <Text style={styles.small}>{match.detail}</Text> : null}
+            <ActionButton label={`Abrir ${match.kind.toLocaleLowerCase("pt-BR")}: ${match.title}`} secondary onPress={match.open} />
+          </View>)}
+          {api.courtCasesNextCursor ? <Text style={styles.small}>Há mais processos para carregar. A busca inclui apenas os processos já carregados; abra Processos e use “Carregar mais processos” para ampliar a busca.</Text> : null}
+        </Card>
         <Card>
           <Heading>Conteúdo informativo</Heading>
           <Text style={styles.small}>Prepare um texto, revise e compartilhe manualmente quando estiver pronto.</Text>

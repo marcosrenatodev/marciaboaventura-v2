@@ -19,6 +19,10 @@ function deviceTimeZone() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Sao_Paulo";
 }
 
+function taskRank(status?: string) {
+  return status === "in_progress" ? 0 : status === "todo" ? 1 : status === "done" ? 2 : 3;
+}
+
 export default function AgendaScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ quick?: string | string[] }>();
@@ -316,12 +320,9 @@ export default function AgendaScreen() {
       <ActionButton testID="agenda-view-tasks" label={currentView === "tasks" ? "Tarefas selecionadas" : "Tarefas"} secondary={currentView !== "tasks"} onPress={() => switchView("tasks")} />
     </View> : null}
     {noticeMessage ? <Text accessibilityLiveRegion="polite" style={styles.notice}>{noticeMessage}</Text> : null}
-    <View style={currentView === "calendar" && !isAppointmentFormOpen ? undefined : { display: "none" }}>
-      <AgendaMonth tasks={api.tasks} appointments={api.appointments} loading={api.loading} issue={api.issue}
-        onCreateTaskForDay={(date) => openTaskForm(date)} onCreateAppointmentForDay={(date) => openAppointmentForm(date)} />
-    </View>
     {currentView === "calendar" ? <>
       <Card>
+        <Text style={styles.eyebrow}>EM PRIMEIRO LUGAR</Text>
         <Heading>Próximos compromissos</Heading>
         {api.loading ? <Text accessibilityLiveRegion="polite" style={styles.small}>Carregando compromissos…</Text> : null}
         {api.issue ? <View style={styles.tight}><Text accessibilityLiveRegion="assertive" style={styles.text}>{api.issue}</Text><ActionButton label="Tentar novamente" secondary onPress={() => void api.refresh()} /></View> : null}
@@ -358,6 +359,10 @@ export default function AgendaScreen() {
         </View>)}
       </Card>
     </> : null}
+    <View style={currentView === "calendar" && !isAppointmentFormOpen ? undefined : { display: "none" }}>
+      <AgendaMonth tasks={api.tasks} appointments={api.appointments} loading={api.loading} issue={api.issue}
+        onCreateTaskForDay={(date) => openTaskForm(date)} onCreateAppointmentForDay={(date) => openAppointmentForm(date)} />
+    </View>
     {currentView === "tasks" ? <>
       {taskForm}
       <Card>
@@ -365,7 +370,7 @@ export default function AgendaScreen() {
         {api.loading ? <Text accessibilityLiveRegion="polite" style={styles.small}>Carregando tarefas…</Text> : null}
         {api.issue ? <View style={styles.tight}><Text accessibilityLiveRegion="assertive" style={styles.text}>{api.issue}</Text><ActionButton label="Tentar novamente" secondary onPress={() => void api.refresh()} /></View> : null}
         {api.sessionInfo && !api.loading && !api.issue && searchedTasks.length === 0 ? <Text style={styles.text}>{searchQuery ? "Nenhuma tarefa corresponde à busca." : "Ainda não há tarefas cadastradas."}</Text> : null}
-        {api.sessionInfo && !api.issue && searchedTasks.map((task) => {
+        {api.sessionInfo && !api.issue && [...searchedTasks].sort((x, y) => taskRank(x.status) - taskRank(y.status) || (x.scheduledOn ?? "9999").localeCompare(y.scheduledOn ?? "9999")).map((task) => {
           const linkedMatter = api.matters.find((matter) => matter.id === task.matterId);
           const linkedMatterLabel = linkedMatter
             ? `${linkedMatter.status === "archived" ? "Assunto arquivado" : "Assunto"}: ${linkedMatter.title}`
