@@ -145,6 +145,7 @@ export function TourSpotlight({
   const [cardBox, setCardBox] = useState<MeasuredBox | null>(null);
   const [missingKey, setMissingKey] = useState<string | null>(null);
   const [cardFocus, setCardFocus] = useState(false);
+  const [minimizedKey, setMinimizedKey] = useState<string | null>(null);
   const candidates = tourTargets[step.screenId] ?? [];
   const selectedTarget = candidates.find((target) => registry.get(target.id) !== undefined) ?? null;
   const registration = selectedTarget ? registry.get(selectedTarget.id) : undefined;
@@ -226,7 +227,17 @@ export function TourSpotlight({
     setCardBox((previous) => previous?.key === targetKey && sameRect(previous, next) ? previous : next);
   };
 
-  const maskColor = "rgba(31, 20, 23, 0.66)";
+  const maskColor = "rgba(31, 20, 23, 0.45)";
+  // Minimized: no mask/blur, so the person can fill the highlighted field; a small chip resumes the guide.
+  if (minimizedKey === targetKey) {
+    return <View pointerEvents="box-none" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
+      <View testID="guided-tour-minimized" style={{ position: "absolute", right: 16, bottom: compact ? 92 + insets.bottom : 24, flexDirection: "row", gap: 8, alignItems: "center", backgroundColor: colors.paper, borderRadius: 999, borderWidth: 1, borderColor: colors.goldDark, paddingLeft: 14, paddingRight: 6, paddingVertical: 4, shadowColor: "#241b1d", shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 8 }}>
+        <Text style={[styles.small, { color: colors.ink }]}>{isScreenGuide ? "Ajuda" : `Tour ${stepIndex + 1}/${totalSteps}`}</Text>
+        <ActionButton compact label="Continuar tour" accessibilityHint="Reabre a explicação desta tela." onPress={() => setMinimizedKey(null)} />
+      </View>
+    </View>;
+  }
+
 
   return <View ref={rootRef} collapsable={false} pointerEvents="box-none" onLayout={(event) => {
     const next = { width: event.nativeEvent.layout.width, height: event.nativeEvent.layout.height };
@@ -272,6 +283,7 @@ export function TourSpotlight({
       {persistenceError ? <ActionButton label="Tentar salvar orientação" secondary disabled={saving} onPress={onRetryPersistence} /> : null}
       {targetMissing ? <ActionButton label="Tentar localizar novamente" secondary onPress={retryTarget} /> : null}
 
+      {spotlightReady ? <ActionButton label="Experimentar agora" secondary accessibilityHint="Esconde o destaque para você usar o campo; o tour fica disponível num botão no canto." onPress={() => setMinimizedKey(targetKey)} /> : null}
       {isScreenGuide ? <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         <View style={{ flex: 1, minWidth: 140 }}><ActionButton label="Fechar guia" secondary onPress={onClose} /></View>
         <View style={{ flex: 1, minWidth: 140 }}><ActionButton label="Ver tour completo" disabled={saving} onPress={onViewFullTour} /></View>

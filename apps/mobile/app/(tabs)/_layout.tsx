@@ -28,10 +28,11 @@ export default function TabLayout() {
       tabBarInactiveTintColor: colors.muted,
       tabBarActiveBackgroundColor: colors.wineWash,
       tabBarStyle: {
-        backgroundColor: colors.paper, borderColor: colors.line,
+        backgroundColor: colors.paper, borderColor: colors.line, borderTopWidth: sidebar ? 0 : 1, borderRightWidth: sidebar ? 1 : 0,
+        shadowColor: "#542030", shadowOpacity: 0.05, shadowRadius: 10, elevation: 4,
         ...(sidebar ? { width: 210, paddingTop: insets.top + 24 } : { height: 70 + insets.bottom + Math.max(0, fontScale - 1) * 44 }),
       },
-      tabBarItemStyle: { minHeight: 56, paddingVertical: 6 },
+      tabBarItemStyle: { minHeight: 56, paddingVertical: 6, borderRadius: 10, marginHorizontal: sidebar ? 10 : 2, marginVertical: 2 },
     }}>
       {tabs.map((tab) => (
         <Tabs.Screen key={tab.name} name={tab.name} options={{

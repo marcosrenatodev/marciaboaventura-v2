@@ -39,3 +39,12 @@ Vitest runs in jsdom with Testing Library matchers configured by `src/test/setup
 ## Commit & Pull Request Guidelines
 
 Recent history uses short imperative summaries, sometimes with Conventional Commit prefixes such as `fix:` and `ci:`. Prefer `type: concise description` (for example, `fix: preserve route on page refresh`) and keep each commit focused. Pull requests should explain the user-visible change, list verification commands, link relevant issues, and include before/after screenshots for visual work. For code changes, run the appropriate checks before requesting review and report exact commands/results; never claim a test ran if it did not. The planned CI/E2E gates are in `docs/plano/04_SEGURANCA_CI_TESTES_OPERACAO.md`.
+
+## Design System & UX (app `apps/mobile`)
+
+- Tokens live only in `apps/mobile/src/theme.ts` (`colors`, `styles`); screens must not hardcode colors, radii or shadows — add a token instead. Why: one source keeps the marsala/gold identity consistent with the public site.
+- Surfaces: cream canvas, white cards (1px line border, radius 16, soft shadow); controls use 1–1.5px borders, radius 10; focus shows a 2px gold-dark border. Why: heavy borders read as unfinished admin UI.
+- Hierarchy: one primary (gold) action per screen header, secondary actions white with outline; serif only for titles, sans for data. Why: clear next step for a busy lawyer.
+- Touch targets ≥48pt, WCAG 2.2 AA contrast, labels/hints in Portuguese, explicit loading/empty/error/success states, drafts never lost silently. Why: accessibility and trust.
+- Guided tour must never block work: masks are pointer-transparent and every step offers "Experimentar agora", which hides the mask and leaves a resume chip. Why: users must be able to fill the highlighted field.
+- Court/DJEN data always shows source and check time and never implies a confirmed deadline. Why: legal safety.
